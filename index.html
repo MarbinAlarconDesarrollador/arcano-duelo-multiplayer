@@ -1589,9 +1589,9 @@
             },
             {
                 id: 49,
-                nombre: "Senami Shinazugawa- Demon Slayer",
-                imagen: "img/personajes/kimetsu/senami-shinazugawa.jpeg",
-                descripcion: "Senami Shinazugawa es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                nombre: "Sanemi Shinazugawa- Demon Slayer",
+                imagen: "img/personajes/kimetsu/sanemi-shinazugawa.jpeg",
+                descripcion: "Sanemi Shinazugawa es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
                 stats: { vida: 84, ataque: 85, defensa: 71, velocidad: 81, magia: 55, inteligencia: 70, resistencia: 80, poder: 81 }
@@ -1693,7 +1693,7 @@
             t.textContent = msg;
             t.classList.add("show");
             clearTimeout(toast._t);
-            toast._t = setTimeout(() => t.classList.remove("show"), 2400);
+            toast._t = setTimeout(() => t.classList.remove("show"), 3400);
         }
 
         function randomCode(len = 5) {
@@ -1757,7 +1757,7 @@
                 if (game.phase !== "lobby" || game.players.length >= MAX_PLAYERS) {
                     c.on("open", () => {
                         c.send({ type: "joinError", reason: game.phase !== "lobby" ? "started" : "full" });
-                        setTimeout(() => { try { c.close(); } catch (e) { } }, 300);
+                        setTimeout(() => { try { c.close(); } catch (e) { } }, 500);
                     });
                     return;
                 }
@@ -2009,7 +2009,7 @@
                 broadcastState();
                 renderGame();
                 if (game.phase === "gameover") showGameOver();
-            }, 4200);
+            }, 5200);
         }
 
         function chooseStat(stat) {

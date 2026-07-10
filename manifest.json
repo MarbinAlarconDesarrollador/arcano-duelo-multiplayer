@@ -1,0 +1,12 @@
+{
+  "name": "Super Triunfo - Arcano Duelo",
+  "short_name": "Super Triunfo",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0ff",
+  "icons": [
+    { "src": "img/iconos/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/iconos/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
