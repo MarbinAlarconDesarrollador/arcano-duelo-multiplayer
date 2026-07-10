@@ -884,22 +884,92 @@
             max-width: 320px;
         }
 
-        footer.hint {
-            margin-top: 24px;
-            padding: 10px;
+        .game-footer {
+            margin-top: 30px;
+            padding: 18px 15px;
             text-align: center;
-            font-size: 10px;
+
+            border-top: 1px solid rgba(255, 255, 255, .08);
+
+            background:
+                linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, .03),
+                    transparent);
+
+            backdrop-filter: blur(8px);
+
+            animation: fadeIn 1.5s ease;
+
             color: var(--text-dim);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            animation: fadeIn 2s ease-in;
-            border-top: 1px solid rgba(255, 255, 255, .05);
-            background: linear-gradient(to right, transparent, rgba(255, 255, 255, .03), transparent);
         }
 
-        footer.hint::before {
-            content: "© ";
-            margin-right: 5px;
+        .footer-line {
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+
+            font-family: var(--font-display);
+
+            font-size: 13px;
+
+            letter-spacing: 1px;
+
+            text-transform: uppercase;
+
+        }
+
+        .footer-line strong {
+
+            color: var(--gold);
+
+            font-weight: 700;
+
+            text-shadow: 0 0 10px rgba(255, 200, 87, .35);
+
+        }
+
+        .separator {
+
+            color: var(--ember);
+
+            opacity: .8;
+
+        }
+
+        .footer-line.small {
+
+            margin-top: 8px;
+
+            font-size: 10px;
+
+            letter-spacing: 2px;
+
+            color: var(--text-dim);
+
+            opacity: .7;
+
+        }
+
+        @media (max-width:480px) {
+
+            .footer-line {
+
+                flex-direction: column;
+
+                gap: 4px;
+
+            }
+
+            .separator {
+
+                display: none;
+
+            }
+
         }
 
         .hidden {
@@ -1008,6 +1078,52 @@
                 max-height: none;
             }
         }
+
+        @media (min-width:1100px) {
+
+            .card {
+
+                display: grid;
+
+                grid-template-columns: 340px 1fr;
+
+                grid-template-areas:
+
+                    "image info"
+
+                    "image stats";
+
+                column-gap: 20px;
+
+                min-height: auto;
+
+            }
+
+            .card-media {
+
+                grid-area: image;
+
+                height: auto;
+
+                max-height: none;
+
+                aspect-ratio: 3/4;
+
+            }
+
+            .card-header {
+
+                grid-area: info;
+
+            }
+
+            .stats {
+
+                grid-area: stats;
+
+            }
+
+        }
     </style>
 </head>
 
@@ -1113,7 +1229,23 @@
             </div>
         </section>
 
-        <footer class="hint">Desarrollado por Marbin Alarcón</footer>
+        <footer class="game-footer">
+
+            <div class="footer-line">
+                © 2026 ◆ <strong>Marbin Alarcón</strong>
+            </div>
+
+            <div class="footer-line small">
+                SUPER TRIUNFO ARENA • v1.0.0
+            </div>
+
+            <div class="footer-line small">
+                Todos los derechos reservados.
+            </div>
+
+        </footer>
+
+
     </div>
 
     <div id="toast"></div>
@@ -1158,7 +1290,7 @@
             {
                 id: 1,
                 nombre: "Asta - Black Clover",
-                imagen: "img/personajes/black-clover/asta.jpeg",
+                imagen: "img/personajes/black-clover/asta.webp",
                 descripcion: "Tras obtener su grimorio de cinco hojas, logró unirse a los Toros Negros, una de las órdenes de Caballeros Mágicos más inadaptadas del Reino del Trébol. A lo largo de la historia, ha superado sus límites en múltiples arcos, enfrentándose a elfos, a la Tríada Oscura y a demonios poderosos como Lucifero",
                 categoria: "Demonios",
                 rareza: "Legendario",
@@ -1167,7 +1299,7 @@
             {
                 id: 2,
                 nombre: "Byakuya Kuchiki - Bleach",
-                imagen: "img/personajes/bleach/byakuya-kuchiki.jpeg",
+                imagen: "img/personajes/bleach/byakuya-kuchiki.webp",
                 descripcion: "Líder del Clan Kuchiki y capitán de la 6.ª División en el Gotei 13. Destaca por su porte noble, vestimenta tradicional y su Zanpakutō Senbonzakura, cuyas hojas se disgregan en millones de pétalos afilados capaces de atacar desde cualquier ángulo.",
                 categoria: "Segadores de Almas",
                 rareza: "Épico",
@@ -1176,7 +1308,7 @@
             {
                 id: 3,
                 nombre: "Ichigo Kurosaki - Bleach",
-                imagen: "img/personajes/bleach/ichigo-kurosaki.jpeg",
+                imagen: "img/personajes/bleach/ichigo-kurosaki.webp",
                 descripcion: "A pesar de su apariencia rebelde (cabello naranja brillante y actitud seria), Ichigo tiene un fuerte sentido de la justicia y una profunda compasión motivada por el trauma de haber perdido a su madre a una edad temprana.",
                 categoria: "Segadores de Almas",
                 rareza: "Legendario",
@@ -1185,7 +1317,7 @@
             {
                 id: 4,
                 nombre: "Kenpachi Zaraki - Bleach",
-                imagen: "img/personajes/bleach/kenpachi-zaraki.jpeg",
+                imagen: "img/personajes/bleach/kenpachi-zaraki.webp",
                 descripcion: "Capitán de la 11.ª División del Gotei 13. Famoso por su brutalidad y amor por el combate, es un guerrero monstruoso que originalmente carecía de nombre, tomando el suyo del peligroso Distrito 80 de Rukongai donde creció. A diferencia de otros, no usa magia (Kido), sino que confía en su inmenso poder espiritual.",
                 categoria: "Bestia",
                 rareza: "Raro",
@@ -1194,7 +1326,7 @@
             {
                 id: 5,
                 nombre: "Kisuke Urahara - Bleach",
-                imagen: "img/personajes/bleach/kisuke-urahara.jpeg",
+                imagen: "img/personajes/bleach/kisuke-urahara.webp",
                 descripcion: "Ex capitán de la 12ª División y fundador del Instituto de Investigación y Desarrollo Shinigami, destaca por su enorme intelecto, actitud misteriosa y su icónico sombrero a rayas",
                 categoria: "Humano",
                 rareza: "Épico",
@@ -1203,7 +1335,7 @@
             {
                 id: 6,
                 nombre: "Renji Abarai - Bleach",
-                imagen: "img/personajes/bleach/renji-abarai.jpeg",
+                imagen: "img/personajes/bleach/renji-abarai.webp",
                 descripcion: "Carismático Shinigami y teniente de la Sexta División del Gotei 13 en el anime y manga Bleach. Destaca por su característico cabello rojo, tatuajes tribales y su lealtad inquebrantable, además de ser el esposo de Rukia Kuchiki.",
                 categoria: "Segadores de Almas",
                 rareza: "Común",
@@ -1212,7 +1344,7 @@
             {
                 id: 7,
                 nombre: "Rukia Kuchiki - Bleach",
-                imagen: "img/personajes/bleach/rukia-kuchiki.jpeg",
+                imagen: "img/personajes/bleach/rukia-kuchiki.webp",
                 descripcion: "Actual capitana de la 13.ª División , sucediendo al excapitán Jūshirō Ukitake tras haber servido anteriormente como teniente. Rukia es la hermana adoptiva de Byakuya Kuchiki , la hermana menor de Hisana Kuchiki , amiga de Ichigo Kurosaki , madre de Ichika Abarai y está casada con Renji Abarai .",
                 categoria: "Segadores de Almas",
                 rareza: "Común",
@@ -1221,7 +1353,7 @@
             {
                 id: 8,
                 nombre: "Shigekuni Yamamoto - Bleach",
-                imagen: "img/personajes/bleach/shigekuni-yamamoto.jpeg",
+                imagen: "img/personajes/bleach/shigekuni-yamamoto.webp",
                 descripcion: "Fue el capitán de la 1.ª División del Gotei 13 y también el primer Capitán Comandante de todo el Gotei 13. Su teniente era Chōjirō Sasakibe . Tras su muerte en la Guerra de Sangre Quincy y su expulsión al Infierno , obtuvo el epíteto de «Fundador del Gotei»",
                 categoria: "Segadores de Almas",
                 rareza: "Legendario",
@@ -1230,7 +1362,7 @@
             {
                 id: 9,
                 nombre: "Shunsui Kyoraku - Bleach",
-                imagen: "img/personajes/bleach/shunsui-Kyoraku.jpeg",
+                imagen: "img/personajes/bleach/shunsui-Kyoraku.webp",
                 descripcion: "Es el capitán de la 1.ª División y capitán comandante del Gotei 13. Sus tenientes son su sobrina, Nanao Ise , y Genshirō Okikiba . Es el antiguo capitán de la 8.ª División .",
                 categoria: "Segadores de Almas",
                 rareza: "Legendario",
@@ -1239,7 +1371,7 @@
             {
                 id: 10,
                 nombre: "Toshiro Hitsugaya - Bleach",
-                imagen: "img/personajes/bleach/toshiro-hitsugaya.jpeg",
+                imagen: "img/personajes/bleach/toshiro-hitsugaya.webp",
                 descripcion: "Es el capitán de la 10.ª División del Gotei 13 y también el más joven en history de ser nombrado capitán. Es conocido por su habilidad con el hielo y su personalidad serena.",
                 categoria: "Segadores de Almas",
                 rareza: "Legendario",
@@ -1248,7 +1380,7 @@
             {
                 id: 11,
                 nombre: "Uryu Ishida - Bleach",
-                imagen: "img/personajes/bleach/uryu-ishida.jpeg",
+                imagen: "img/personajes/bleach/uryu-ishida.webp",
                 descripcion: "es un Quincy Gemischt que reside en la ciudad de Karakura . Es médico en el Hospital de Karakura, además de primo segundo y amigo de Ichigo Kurosaki . Es un antiguo Sternritter del Wandenreich con la designación A: Antítesis , [ 7 ] anteriormente uno de los Schutzstaffel de Yhwach , [ 8 ] y había sido nombrado por Yhwach como su futuro sucesor.",
                 categoria: "Quincy",
                 rareza: "Épico",
@@ -1257,7 +1389,7 @@
             {
                 id: 12,
                 nombre: "Yhwach - Bleach",
-                imagen: "img/personajes/bleach/Yhwach-Zangetsu.jpeg",
+                imagen: "img/personajes/bleach/Yhwach-Zangetsu.webp",
                 descripcion: "Es el líder del Wandenreich y el principal antagonista de la serie. Es un antiguo Sternritter del Wandenreich con la designación A: Antítesis , anteriormente uno de los Schutzstaffel de Yhwach , y había sido nombrado por Yhwach como su futuro sucesor.",
                 categoria: "Quincy",
                 rareza: "Épico",
@@ -1266,7 +1398,7 @@
             {
                 id: 13,
                 nombre: "Camus de Acuario - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/acuario.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/acuario.webp",
                 descripcion: "uno de los caballeros dorados del siglo XX. Es el Caballero Dorado de Acuario , conocido como el  Mago del agua y el hielo. Entrenó al pequeño Hyoga durante seis años en las gélidas tierras del este de Siberia y se vio obligado a luchar contra él en la batalla de las Doce Casas.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1275,7 +1407,7 @@
             {
                 id: 14,
                 nombre: "Mu de Aries - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/aries.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/aries.webp",
                 descripcion: "uno de los doce  caballeros dorados . Es uno de los aliados más leales del caballero de bronce y se encarga de reparar las telas dañadas en las primeras etapas de la serie. También se le conoce como Mu de Jamir, el herrero de telas.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1284,7 +1416,7 @@
             {
                 id: 15,
                 nombre: "Mascara de Muerte Cancer - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/cancer.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/cancer.webp",
                 descripcion: "comúnmente llamado Máscara de Muerte, Máscara de la Muerte o Máscara Mortal en los doblajes para países de habla hispana, fue el Saint de Cáncer que protegía el Templo del Gran Cangrejo.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1293,7 +1425,7 @@
             {
                 id: 16,
                 nombre: "Shura de Capricornio - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/capricornio.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/capricornio.webp",
                 descripcion: "Shura de Capricornio es el quinto caballero dorado más fuerte y poderoso. Su poder es igual al de Camus de Acuario. Con su poderosa Excalibur lo convierten en uno de los más fuertes y poderosos del universo de Saint Seiya.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1302,7 +1434,7 @@
             {
                 id: 17,
                 nombre: "Milo de Escorpión - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/escorpion.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/escorpion.webp",
                 descripcion: "Fue el Santo de Oro de Scorpius del siglo XX en el anime y manga Saint Seiya. Es el Santo de Oro que protege la Casa de Escorpio. Aprecia mucho la amistad, y por eso vela por Hyōga, después de la muerte de Camus de Aquarius. Se siente orgulloso de ser un Gold Saint y se vuelve implacable frente a los enemigos.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1311,7 +1443,7 @@
             {
                 id: 18,
                 nombre: "Saga de Géminis - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/geminis.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/geminis.webp",
                 descripcion: "Fue el Gold Saint de Géminis y principal antagonista desde la Saga de los Santos Negros hasta la Batalla de los doce templos, justamente por ser el usurpador del Papa del Santuario, con el fin de dominar el mundo y acabar con Saori y sus Santos al manipular al Ejército de Athena.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1320,7 +1452,7 @@
             {
                 id: 19,
                 nombre: "Aioria de Leo - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/leo.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/leo.webp",
                 descripcion: "Fue el Santo de Oro de Leo en la generación del Siglo XX hasta la Guerra contra Hades en 1990. Aiolia es un personaje del manga y anime Saint Seiya conocido como Los Caballeros del Zodiaco y protagonista de los Spin-offs Episode.G y Soul of Gold. Es el hermano menor de Aiolos, a pesar de su personalidad algo explosiva, tiene un corazón puro que identifica rápidamente la justicia, es por eso que fue uno de los primeros santos en reconocer la autoridad de Athena.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1329,7 +1461,7 @@
             {
                 id: 20,
                 nombre: "Dhoko de Libra - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/libra.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/libra.webp",
                 descripcion: "Es uno de los Caballeros Dorados. Es uno de los personajes más antiguos del manga, junto con Aries Shion , ya que ambos aparecen en la anterior Guerra Santa , y es conocido principalmente por ser el mentor de Dragon Shiryu . Todos los Caballeros de Atenea también lo llaman el Viejo Maestro (老師, Rōshi ) como muestra de respeto, aunque su único discípulo verdadero sea Shiryu.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1338,7 +1470,7 @@
             {
                 id: 21,
                 nombre: "Afrodita de Piscis - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/picis.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/picis.webp",
                 descripcion: "Fue el Gold Saint de Pisces hasta su muerte a manos de Shun de Andromeda. Posteriormente fue revivido por Ker siendo muerto junto a Deathmask de Cancer a manos de Rhadamanthys. Su Cosmos reanimado por Athena haría que apareciese nuevamente ante el Muro de los Lamentos y reviviría temporalmente una vez más por Odín como Einherjer para derrotar al falso dios Loki en Saint Seiya: Soul of Gold.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1347,7 +1479,7 @@
             {
                 id: 22,
                 nombre: "Aioros de Sagitario - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/sagitario.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/sagitario.webp",
                 descripcion: "El Caballero de Oro de Sagitario, Aioros, es el epítome de la lealtad y el sacrificio en Los Caballeros del Zodiaco. Marcado como traidor tras salvar a la bebé Atenea, su espíritu guía y protege al protagonista Seiya de Pegaso, quien frecuentemente porta su armadura en momentos críticos.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1356,7 +1488,7 @@
             {
                 id: 23,
                 nombre: "Aldebaran de Tauro - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/tauro.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/tauro.webp",
                 descripcion: "destaca por ser el guardián más corpulento, midiendo 2.10 m y pesando 130 kg. Es noble, leal y paciente, pero letal en el combate usando su técnica destructiva Gran Cuerno, la cual ejecuta con sus característicos brazos cruzados.",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1365,7 +1497,7 @@
             {
                 id: 24,
                 nombre: "Shaka de Virgo - Caballeros del Zodiaco",
-                imagen: "img/personajes/caballeros-zodiaco/virgo.jpeg",
+                imagen: "img/personajes/caballeros-zodiaco/virgo.webp",
                 descripcion: "El Caballero de Virgo, principalmente encarnado por Shaka de Virgo en la obra clásica, es el Santo de Oro guardián del sexto templo del Santuario. Conocido como el hombre más cercano a Dios y considerado la reencarnación de Buda, destaca por su inmenso poder cósmico, sabiduría, serenidad y por dominar el Octavo Sentido",
                 categoria: "Caballeros del Zodiaco",
                 rareza: "Épico",
@@ -1374,7 +1506,7 @@
             {
                 id: 25,
                 nombre: "Choso - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/choso.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/choso.webp",
                 descripcion: "Choso es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1383,7 +1515,7 @@
             {
                 id: 26,
                 nombre: "jogo - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/jogo.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/jogo.webp",
                 descripcion: "Jogo es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1392,7 +1524,7 @@
             {
                 id: 27,
                 nombre: "Kento Kanami - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/kento-kanami.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/kento-kanami.webp",
                 descripcion: "Kento Kanami es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1401,7 +1533,7 @@
             {
                 id: 28,
                 nombre: "Mahito - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/mahito.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/mahito.webp",
                 descripcion: "Mahito es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1410,7 +1542,7 @@
             {
                 id: 29,
                 nombre: "Megumi Fushiguro - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/megumifushiguro.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/megumifushiguro.webp",
                 descripcion: "Megumi Fushiguro es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1419,7 +1551,7 @@
             {
                 id: 30,
                 nombre: "Mei Mei - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/mei-mei.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/mei-mei.webp",
                 descripcion: "Mei Mei es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1428,7 +1560,7 @@
             {
                 id: 31,
                 nombre: "Noritoshi Kamo - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/noritoshi-kamo.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/noritoshi-kamo.webp",
                 descripcion: "Noritoshi Kamo es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1437,7 +1569,7 @@
             {
                 id: 32,
                 nombre: "Saturu Goyo - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/saturu-goyo.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/saturu-goyo.webp",
                 descripcion: "Saturu Goyo es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Legendario",
@@ -1446,7 +1578,7 @@
             {
                 id: 33,
                 nombre: "Suguru Geto - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/suguru-geto.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/suguru-geto.webp",
                 descripcion: "Suguru Geto es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1455,7 +1587,7 @@
             {
                 id: 34,
                 nombre: "Sukuna - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/sukuna.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/sukuna.webp",
                 descripcion: "Sukuna es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Legendario",
@@ -1464,7 +1596,7 @@
             {
                 id: 35,
                 nombre: "Toge Inumaki - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/toge-inumaki.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/toge-inumaki.webp",
                 descripcion: "Toge Inumaki es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1473,7 +1605,7 @@
             {
                 id: 36,
                 nombre: "Yoshinobu Gakuganji - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/yoshinobu-gakuganji.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/yoshinobu-gakuganji.webp",
                 descripcion: "Yoshinobu Gakuganji es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1482,7 +1614,7 @@
             {
                 id: 37,
                 nombre: "Yuta Okkotsu - Jujutsu Kaisen",
-                imagen: "img/personajes/jujutsu-kaisen/yuta-okkotsu.jpeg",
+                imagen: "img/personajes/jujutsu-kaisen/yuta-okkotsu.webp",
                 descripcion: "Yuta Okkotsu es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Jujutsu Kaisen",
                 rareza: "Épico",
@@ -1491,7 +1623,7 @@
             {
                 id: 38,
                 nombre: "Genya Shinazugawa - Demon Slayer",
-                imagen: "img/personajes/kimetsu/genya-shinazugawa.jpeg",
+                imagen: "img/personajes/kimetsu/genya-shinazugawa.webp",
                 descripcion: "Genya Shinazugawa es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1500,7 +1632,7 @@
             {
                 id: 39,
                 nombre: "Giyu Tomioka - Demon Slayer",
-                imagen: "img/personajes/kimetsu/giyu-tomioka.jpeg",
+                imagen: "img/personajes/kimetsu/giyu-tomioka.webp",
                 descripcion: "Giyu Tomioka es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1509,7 +1641,7 @@
             {
                 id: 40,
                 nombre: "Gyomei Himejima - Demon Slayer",
-                imagen: "img/personajes/kimetsu/gyomei-himejima.jpeg",
+                imagen: "img/personajes/kimetsu/gyomei-himejima.webp",
                 descripcion: "Gyomei Himejima es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1518,7 +1650,7 @@
             {
                 id: 41,
                 nombre: "Inosuke Hashibira - Demon Slayer",
-                imagen: "img/personajes/kimetsu/inosuke-hashibira.jpeg",
+                imagen: "img/personajes/kimetsu/inosuke-hashibira.webp",
                 descripcion: "Inosuke Hashibira es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1527,7 +1659,7 @@
             {
                 id: 42,
                 nombre: "Kanae Kocho - Demon Slayer",
-                imagen: "img/personajes/kimetsu/kanae-kocho.jpeg",
+                imagen: "img/personajes/kimetsu/kanae-kocho.webp",
                 descripcion: "Kanae Kocho es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1536,7 +1668,7 @@
             {
                 id: 43,
                 nombre: "Kanao Tsuyuri - Demon Slayer",
-                imagen: "img/personajes/kimetsu/kanao-tsuyuri.jpeg",
+                imagen: "img/personajes/kimetsu/kanao-tsuyuri.webp",
                 descripcion: "Kanao Tsuyuri es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1545,7 +1677,7 @@
             {
                 id: 44,
                 nombre: "Kyojuro Rengoku - Demon Slayer",
-                imagen: "img/personajes/kimetsu/kyojuro-rengoku.jpeg",
+                imagen: "img/personajes/kimetsu/kyojuro-rengoku.webp",
                 descripcion: "Kyojuro Rengoku es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1554,7 +1686,7 @@
             {
                 id: 45,
                 nombre: "Mitsuri Kanroji - Demon Slayer",
-                imagen: "img/personajes/kimetsu/mitsuri-kanroji.jpeg",
+                imagen: "img/personajes/kimetsu/mitsuri-kanroji.webp",
                 descripcion: "Mitsuri Kanroji es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1563,7 +1695,7 @@
             {
                 id: 46,
                 nombre: "Muichiro Tokito - Demon Slayer",
-                imagen: "img/personajes/kimetsu/muichiro-tokito.jpeg",
+                imagen: "img/personajes/kimetsu/muichiro-tokito.webp",
                 descripcion: "Muichiro Tokito es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1572,7 +1704,7 @@
             {
                 id: 47,
                 nombre: "Nezuko Kamado - Demon Slayer",
-                imagen: "img/personajes/kimetsu/nezuko-kamado.jpeg",
+                imagen: "img/personajes/kimetsu/nezuko-kamado.webp",
                 descripcion: "Nezuko Kamado es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1581,7 +1713,7 @@
             {
                 id: 48,
                 nombre: "Obanai Iguro - Demon Slayer",
-                imagen: "img/personajes/kimetsu/obanai-iguro.jpeg",
+                imagen: "img/personajes/kimetsu/obanai-iguro.webp",
                 descripcion: "Obanai Iguro es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1590,7 +1722,7 @@
             {
                 id: 49,
                 nombre: "Sanemi Shinazugawa- Demon Slayer",
-                imagen: "img/personajes/kimetsu/sanemi-shinazugawa.jpeg",
+                imagen: "img/personajes/kimetsu/sanemi-shinazugawa.webp",
                 descripcion: "Sanemi Shinazugawa es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1599,7 +1731,7 @@
             {
                 id: 50,
                 nombre: "Tanjiro Kamado - Demon Slayer",
-                imagen: "img/personajes/kimetsu/tanjiro.jpeg",
+                imagen: "img/personajes/kimetsu/tanjiro.webp",
                 descripcion: "Tanjiro Kamado es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1608,7 +1740,7 @@
             {
                 id: 51,
                 nombre: "Tengen Uzui - Demon Slayer",
-                imagen: "img/personajes/kimetsu/tengen-uzui.jpeg",
+                imagen: "img/personajes/kimetsu/tengen-uzui.webp",
                 descripcion: "Tengen Uzui es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -1617,7 +1749,7 @@
             {
                 id: 52,
                 nombre: "Zenitsu Agatsuma - Demon Slayer",
-                imagen: "img/personajes/kimetsu/zenitsu-agatsuma.jpeg",
+                imagen: "img/personajes/kimetsu/zenitsu-agatsuma.webp",
                 descripcion: "Zenitsu Agatsuma es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
                 categoria: "Demon Slayer",
                 rareza: "Épico",
@@ -2048,7 +2180,7 @@
         /* Render — sala de espera                                                */
         /* ---------------------------------------------------------------------- */
         function hexColorFor(id) {
-            const palette = [ "#ff7a29", "#17e3a6", "#9b7bff", "#ffc857", "#ff4d5e", "#3cd2ff" ];
+            const palette = ["#ff7a29", "#17e3a6", "#9b7bff", "#ffc857", "#ff4d5e", "#3cd2ff"];
             let h = 0;
             for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
             return palette[h % palette.length];
@@ -2141,7 +2273,7 @@
                 const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
                 let media = '<div class="hex" style="--hex-color:' + hexColorFor(p.id) + '">' + initial + '</div>';
                 if (revealed && p.current && p.current.image) {
-                    media = '<div class="hex" style="--hex-color:' + hexColorFor(p.id) + '"><img src="' + p.current.image + '" alt=""></div>';
+                    media = '<div class="hex" style="--hex-color:' + hexColorFor(p.id) + '"><img loading="lazy" decoding="async" src="' + p.current.image + '" alt="' + p.current.name + '"></div>';
                 }
 
                 let resultTag = "";
@@ -2161,6 +2293,14 @@
             });
         }
 
+        function preloadImage(src) {
+
+            const img = new Image();
+
+            img.src = src;
+
+        }
+
         function renderMyCard(me, isMyTurn) {
             const myCard = me.current;
             const elMine = ELEMENTS.find(e => e.key === (myCard && myCard.element)) || ELEMENTS[0];
@@ -2170,7 +2310,7 @@
             cardMineEl.querySelector(".card-name").textContent = myCard ? myCard.name : (me.eliminated ? "Has sido eliminado" : "—");
             $("media-mine").innerHTML = myCard
                 ? (myCard.image
-                    ? '<img src="' + myCard.image + '" alt="' + myCard.name + '">'
+                    ? '<img loading="lazy" decoding="async" src="' + myCard.image + '" alt="' + myCard.name + '">'
                     : '<div class="glyph-fallback">' + myCard.glyph + '</div>')
                 : '<div class="glyph-fallback">🂠</div>';
 
