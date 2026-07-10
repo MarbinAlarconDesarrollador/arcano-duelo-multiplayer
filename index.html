@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0e13">
+    <meta name="description" content="Duelo de cartas de combate estilo Super Trunfo, multijugador en línea vía P2P.">
+    <title>Arcano Duelo — Cartas de Combate</title>
+
+    <!-- PWA: manifiesto e iconos -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Arcano Duelo">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* =====================================================================
+           TOKENS — Identidad "Arena Holográfica"
+           Fondo grafito frío + energía ámbar (tú) vs jade (rivales) + acento
+           violeta para rareza. Tipografía Rajdhani (condensada, deportiva)
+           para display y JetBrains Mono para datos/HUD.
+           ===================================================================== */
+        :root {
+            --bg-void: #080b10;
+            --bg-panel: #12181f;
+            --bg-panel-2: #182029;
+            --line: #253040;
+            --line-soft: rgba(255, 255, 255, .06);
+            --ember: #ff7a29;
+            --ember-soft: rgba(255, 122, 41, .18);
+            --jade: #17e3a6;
+            --jade-soft: rgba(23, 227, 166, .16);
+            --violet: #9b7bff;
+            --gold: #ffc857;
+            --text: #eef4f2;
+            --text-dim: #8996a3;
+            --danger: #ff4d5e;
+            --ok: #17e3a6;
+            --radius: 18px;
+            --radius-sm: 12px;
+            --font-display: 'Rajdhani', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background:
+                radial-gradient(ellipse 60% 40% at 15% -8%, var(--ember-soft), transparent 55%),
+                radial-gradient(ellipse 60% 45% at 100% 8%, var(--jade-soft), transparent 55%),
+                repeating-linear-gradient(115deg, rgba(255, 255, 255, .015) 0 2px, transparent 2px 44px),
+                var(--bg-void);
+            color: var(--text);
+            font-family: var(--font-mono);
+            overflow-x: hidden;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        #app {
+            max-width: 560px;
+            margin: 0 auto;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            padding: clamp(14px, 3vw, 20px) clamp(14px, 4vw, 22px) 24px;
+        }
+
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn .35s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: .3px;
+        }
+
+        .logo {
+            text-align: center;
+            margin: 6px 0 22px;
+        }
+
+        .logo h1 {
+            font-size: clamp(28px, 8vw, 40px);
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, var(--ember), var(--gold) 45%, var(--jade));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 34px rgba(255, 122, 41, .2);
+        }
+
+        .logo p {
+            color: var(--text-dim);
+            font-size: 11.5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* ---------- botones / inputs ---------- */
+        .btn {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 15.5px;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            color: var(--text);
+            background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0));
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease, opacity .2s ease;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(.97);
+        }
+
+        .btn-primary {
+            border-color: var(--ember);
+            box-shadow: 0 0 0 1px rgba(255, 122, 41, .2) inset, 0 0 18px rgba(255, 122, 41, .22);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 0 1px rgba(255, 122, 41, .4) inset, 0 0 28px rgba(255, 122, 41, .38);
+        }
+
+        .btn-accent {
+            border-color: var(--jade);
+            box-shadow: 0 0 0 1px rgba(23, 227, 166, .2) inset, 0 0 18px rgba(23, 227, 166, .22);
+        }
+
+        .btn-accent:hover {
+            box-shadow: 0 0 0 1px rgba(23, 227, 166, .4) inset, 0 0 28px rgba(23, 227, 166, .38);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border-color: var(--line);
+            color: var(--text-dim);
+        }
+
+        .btn:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+            filter: grayscale(.4);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 auto;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, .03);
+            color: var(--text-dim);
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color .2s ease, color .2s ease;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        input[type=text] {
+            font-family: var(--font-mono);
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text);
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px 16px;
+            width: 100%;
+            outline: none;
+            text-align: center;
+        }
+
+        input[type=text]:focus {
+            border-color: var(--ember);
+            box-shadow: 0 0 0 3px rgba(255, 122, 41, .14);
+        }
+
+        input.name-input {
+            text-transform: none;
+            letter-spacing: .5px;
+        }
+
+        input.name-input:focus {
+            border-color: var(--jade);
+            box-shadow: 0 0 0 3px rgba(23, 227, 166, .14);
+        }
+
+        /* ---------- panel ---------- */
+        .panel {
+            background: rgba(18, 24, 31, .72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--line-soft);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, .4);
+            border-radius: var(--radius);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(115deg, transparent 40%, rgba(255, 122, 41, .05) 50%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .muted {
+            color: var(--text-dim);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-dim);
+            font-size: 11px;
+            letter-spacing: 2px;
+            margin: 6px 0;
+            text-transform: uppercase;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+
+        /* ---------- lobby ---------- */
+        #screen-lobby {
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .name-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .name-field label {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .mode-row {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .mode-card {
+            cursor: pointer;
+        }
+
+        .mode-card h3 {
+            font-size: 17px;
+            color: var(--ember);
+            margin-bottom: 6px;
+            letter-spacing: .5px;
+        }
+
+        .mode-card.join h3 {
+            color: var(--jade);
+        }
+
+        .code-display {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: clamp(22px, 7vw, 30px);
+            letter-spacing: 6px;
+            text-align: center;
+            color: var(--gold);
+            background: rgba(255, 200, 87, .07);
+            border: 1px dashed rgba(255, 200, 87, .5);
+            border-radius: 10px;
+            padding: 16px 10px;
+            word-break: break-all;
+            text-shadow: 0 0 18px rgba(255, 200, 87, .5);
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            margin: 12px auto 2px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 122, 41, .15);
+            border-top-color: var(--ember);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ---------- sala de espera / roster ---------- */
+        .lobby-panel {
+            margin: auto 0;
+        }
+
+        .player-roster {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+
+        .roster-empty {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 10px;
+        }
+
+        .roster-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+        }
+
+        .roster-row.me {
+            border-color: var(--jade);
+            box-shadow: 0 0 0 1px rgba(23, 227, 166, .18) inset;
+        }
+
+        .hex {
+            --hex-color: var(--ember);
+            position: relative;
+            width: 38px;
+            height: 38px;
+            flex: 0 0 auto;
+            clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%);
+            background: linear-gradient(160deg, rgba(255, 255, 255, .12), rgba(0, 0, 0, .3)), var(--hex-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 15px;
+            color: #0a0e13;
+            overflow: hidden;
+        }
+
+        .hex img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .roster-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .roster-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .roster-tag {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .roster-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--jade);
+            box-shadow: 0 0 8px var(--jade);
+            flex: 0 0 auto;
+        }
+
+        .roster-dot.off {
+            background: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
+        }
+
+        /* ---------- juego ---------- */
+        #screen-game {
+            gap: 12px;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: .5px;
+        }
+
+        .hud-left {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .hud b {
+            color: var(--text);
+            font-family: var(--font-display);
+            font-size: 14px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 5px 12px;
+            font-size: 11px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--jade);
+            box-shadow: 0 0 8px var(--jade);
+        }
+
+        .turn-banner {
+            text-align: center;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: .3px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, .03);
+            transition: all .3s ease;
+        }
+
+        .turn-banner.mine {
+            border-color: var(--ember);
+            color: var(--ember);
+            box-shadow: 0 0 20px rgba(255, 122, 41, .18) inset;
+            animation: border-glow 3s infinite ease-in-out;
+        }
+
+        .turn-banner.theirs {
+            border-color: var(--jade);
+            color: var(--jade);
+            box-shadow: 0 0 20px rgba(23, 227, 166, .15) inset;
+        }
+
+        @keyframes border-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px rgba(255, 122, 41, .12) inset;
+            }
+
+            50% {
+                box-shadow: 0 0 22px rgba(255, 122, 41, .32) inset;
+            }
+        }
+
+        /* ---------- arena / oponentes ---------- */
+        .arena {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .opponents-strip {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+        }
+
+        .opp-chip {
+            flex: 0 0 auto;
+            width: 92px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 8px 6px;
+            text-align: center;
+            transition: border-color .25s ease, box-shadow .25s ease, opacity .25s ease;
+        }
+
+        .opp-chip.active-turn {
+            border-color: var(--jade);
+            box-shadow: 0 0 16px rgba(23, 227, 166, .3);
+        }
+
+        .opp-chip.eliminated {
+            opacity: .35;
+            filter: grayscale(.6);
+        }
+
+        .opp-chip .hex {
+            width: 89px;
+            height: 89px;
+        }
+
+        .opp-chip .roster-name {
+            font-size: 11.5px;
+            max-width: 84px;
+        }
+
+        .opp-count {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .opp-stat-result {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 12px;
+            padding: 1px 7px;
+            border-radius: 999px;
+            margin-top: 1px;
+        }
+
+        .opp-stat-result.win {
+            color: var(--danger);
+            background: rgba(255, 77, 94, .12);
+        }
+
+        .opp-stat-result.lose {
+            color: var(--jade);
+            background: rgba(23, 227, 166, .12);
+        }
+
+        .opp-stat-result.tie {
+            color: var(--gold);
+            background: rgba(255, 200, 87, .12);
+        }
+
+        /* ---------- carta ---------- */
+        .main-duel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-wrap {
+            perspective: 900px;
+        }
+
+        .card {
+            position: relative;
+            border-radius: 18px;
+            padding: 16px;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background:
+                radial-gradient(circle at 25% 0%, rgba(255, 255, 255, .07), transparent 55%),
+                linear-gradient(160deg, #182029 0%, #080b10 100%);
+            border: 1px solid var(--el-color, var(--ember));
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, .03) inset,
+                0 14px 34px -10px rgba(0, 0, 0, .7),
+                0 0 30px -6px var(--el-color, var(--ember));
+            transition: box-shadow .3s ease, transform .3s ease;
+        }
+
+        .card.facedown {
+            align-items: center;
+            justify-content: center;
+            background:
+                repeating-linear-gradient(45deg, rgba(255, 122, 41, .05) 0 8px, rgba(23, 227, 166, .05) 8px 16px),
+                linear-gradient(160deg, #141a21, #080b10);
+        }
+
+        .card.facedown .rune {
+            font-size: 42px;
+            opacity: .55;
+            color: var(--ember);
+            text-shadow: 0 0 20px var(--ember);
+        }
+
+        .card .el-tag {
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--el-color, var(--ember));
+            border: 1px solid var(--el-color, var(--ember));
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 999px;
+            align-self: flex-start;
+            font-family: var(--font-display);
+            font-weight: 600;
+        }
+
+        .card .card-name {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 17px;
+            line-height: 1.2;
+            margin: 10px 0 6px;
+            color: var(--text);
+        }
+
+        .card-media {
+            position: relative;
+            width: 100%;
+            height: 390px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 2px 0 8px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .08);
+            box-shadow: 0 0 18px -4px var(--el-color, var(--ember)) inset;
+        }
+
+        .card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: saturate(1.05);
+        }
+
+        .card-media .glyph-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            filter: drop-shadow(0 0 8px var(--el-color));
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid transparent;
+        }
+
+        .stat-row .k {
+            color: var(--text-dim);
+            letter-spacing: .5px;
+        }
+
+        .stat-row .v {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-row.clickable {
+            cursor: pointer;
+            border-color: var(--line);
+            transition: border-color .15s ease, transform .1s ease, background .15s ease;
+        }
+
+        .stat-row.clickable:active {
+            transform: scale(.97);
+        }
+
+        .stat-row.clickable:hover {
+            border-color: var(--ember);
+            background: rgba(255, 122, 41, .06);
+        }
+
+        .stat-row.chosen {
+            border-color: var(--gold);
+            box-shadow: 0 0 14px rgba(255, 200, 87, .35);
+        }
+
+        .stat-row.win {
+            border-color: var(--jade);
+            background: rgba(23, 227, 166, .08);
+            box-shadow: 0 0 14px rgba(23, 227, 166, .3);
+        }
+
+        .stat-row.lose {
+            border-color: var(--danger);
+            background: rgba(255, 77, 94, .08);
+            opacity: .75;
+        }
+
+        /* Barra de duelo — elemento distintivo: compara mi valor contra el
+           mejor rival cuando se resuelve una ronda */
+        .duel-gauge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 6px;
+            margin-top: 4px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, .06);
+        }
+
+        .duel-gauge span {
+            height: 100%;
+            display: block;
+            transition: width .5s cubic-bezier(.2, .9, .25, 1);
+        }
+
+        .duel-gauge .g-mine {
+            background: var(--ember);
+        }
+
+        .duel-gauge .g-opp {
+            background: var(--jade);
+        }
+
+        .log-box {
+            min-height: 40px;
+            font-size: 12.5px;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 10px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, .02);
+            line-height: 1.5;
+        }
+
+        .log-box b {
+            color: var(--gold);
+        }
+
+        .pot-tag {
+            text-align: center;
+            font-size: 11px;
+            color: var(--violet);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ---------- gameover ---------- */
+        #screen-gameover {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .trophy {
+            font-size: 56px;
+            filter: drop-shadow(0 0 24px var(--gold));
+        }
+
+        #go-title {
+            font-size: clamp(24px, 7vw, 32px);
+        }
+
+        #go-title.win {
+            color: var(--jade);
+            text-shadow: 0 0 24px rgba(23, 227, 166, .5);
+        }
+
+        #go-title.lose {
+            color: var(--danger);
+            text-shadow: 0 0 24px rgba(255, 77, 94, .5);
+        }
+
+        .final-standings {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        footer.hint {
+            margin-top: 24px;
+            padding: 10px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: fadeIn 2s ease-in;
+            border-top: 1px solid rgba(255, 255, 255, .05);
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, .03), transparent);
+        }
+
+        footer.hint::before {
+            content: "© ";
+            margin-right: 5px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* toasts */
+        #toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translate(-50%, 20px);
+            background: var(--bg-panel);
+            border: 1px solid var(--ember);
+            color: var(--text);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all .3s ease;
+            z-index: 50;
+            max-width: 88vw;
+            text-align: center;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        /* =====================================================================
+           RESPONSIVE — de móvil (base) a escritorio. La grilla de oponentes
+           es fluida (auto-fill) y a partir de 860px la arena pasa de columna
+           única a un layout de dos paneles para aprovechar el ancho.
+           ===================================================================== */
+        @media (min-width: 640px) {
+            .card {
+                min-height: 420px;
+            }
+
+            .mode-row {
+                flex-direction: row;
+                align-items: stretch;
+            }
+
+            .mode-row .mode-card {
+                flex: 1;
+            }
+
+            .divider {
+                flex-direction: column;
+                width: 1px;
+            }
+
+            .divider::before,
+            .divider::after {
+                width: 1px;
+                height: auto;
+                flex: 1;
+            }
+        }
+
+        @media (min-width: 860px) {
+            #app {
+                max-width: 980px;
+            }
+
+            .arena {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+
+            .opponents-strip {
+                flex-direction: column;
+                flex: 0 0 200px;
+                overflow-x: visible;
+                overflow-y: auto;
+                max-height: 560px;
+            }
+
+            .opp-chip {
+                width: 100%;
+                flex-direction: row;
+                justify-content: flex-start;
+                text-align: left;
+                gap: 10px;
+                padding: 10px;
+            }
+
+            .opp-chip .roster-name {
+                max-width: none;
+            }
+
+            .main-duel {
+                flex: 1;
+            }
+
+            .card {
+                min-height: 460px;
+            }
+        }
+
+        @media (min-width: 640px) {
+            .player-roster {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+
+        <div class="logo">
+            <h1>ARCANO DUELO</h1>
+            <p>Duelo de cartas &middot; P2P multijugador</p>
+        </div>
+
+        <!-- ===================== LOBBY ===================== -->
+        <section id="screen-lobby" class="screen active">
+            <div class="panel name-field">
+                <label for="input-name">Tu nombre de duelista</label>
+                <input type="text" id="input-name" class="name-input" placeholder="Anónimo" maxlength="18">
+            </div>
+
+            <div class="mode-row">
+                <div class="panel mode-card" id="btn-goto-host">
+                    <h3>⚔ Crear sala</h3>
+                    <p class="muted">Genera un código y compártelo con hasta 5 rivales.</p>
+                </div>
+
+                <div class="divider">o</div>
+
+                <div class="panel mode-card join">
+                    <h3>🔗 Unirse a sala</h3>
+                    <p class="muted">Ingresa el código que te compartió el anfitrión.</p>
+                    <div class="stack" style="margin-top:12px;">
+                        <input type="text" id="input-join-code" placeholder="CÓDIGO" maxlength="8">
+                        <button class="btn btn-accent btn-block" id="btn-join">Unirme al duelo</button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="muted center" style="margin-top:6px;">Se necesita conexión a internet para emparejar con tus
+                rivales. Hasta 6 jugadores por sala.</p>
+        </section>
+
+        <!-- ===================== SALA DE ESPERA / LOBBY ===================== -->
+        <section id="screen-waiting" class="screen">
+            <div class="panel stack lobby-panel">
+                <h3 id="waiting-title" class="center">Creando sala...</h3>
+                <div id="waiting-code-block" class="hidden">
+                    <p class="muted center">Comparte este código con tus rivales:</p>
+                    <div class="code-display" id="host-code">------</div>
+                    <button class="btn btn-ghost btn-block" id="btn-copy-code" style="margin-top:10px;">📋 Copiar
+                        código</button>
+                </div>
+                <div class="spinner" id="waiting-spinner"></div>
+                <p class="muted center" id="waiting-status">Esperando conexión…</p>
+
+                <div class="player-roster" id="lobby-roster"></div>
+
+                <button class="btn btn-primary btn-block hidden" id="btn-start-game">⚔ Iniciar duelo</button>
+                <button class="btn btn-ghost btn-block" id="btn-cancel-wait">Cancelar</button>
+            </div>
+        </section>
+
+        <!-- ===================== JUEGO ===================== -->
+        <section id="screen-game" class="screen">
+            <div class="hud">
+                <div class="hud-left">
+                    <span class="pill room-pill"><span class="dot"></span> <b id="hud-room-code">—</b></span>
+                    <span class="pill">👥 <b id="hud-player-count">0</b></span>
+                </div>
+                <button class="btn-icon" id="btn-leave-game" title="Abandonar duelo">✕</button>
+            </div>
+
+            <div id="turn-banner" class="turn-banner">Repartiendo cartas…</div>
+
+            <div class="arena">
+                <div class="opponents-strip" id="opponents-strip"></div>
+
+                <div class="main-duel">
+                    <div class="card-wrap">
+                        <div class="card" id="card-mine">
+                            <span class="el-tag">—</span>
+                            <div class="card-media" id="media-mine">
+                                <div class="glyph-fallback">🂠</div>
+                            </div>
+                            <div class="card-name">—</div>
+                            <div class="stats" id="stats-mine"></div>
+                        </div>
+                    </div>
+
+                    <div class="pot-tag hidden" id="pot-tag"></div>
+                    <div class="log-box" id="log-box">El duelo va a comenzar…</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== FIN DE PARTIDA ===================== -->
+        <section id="screen-gameover" class="screen">
+            <div class="trophy" id="go-trophy">🏆</div>
+            <h2 id="go-title">—</h2>
+            <p class="muted" id="go-sub">—</p>
+            <div class="final-standings" id="final-standings"></div>
+            <div class="stack" style="width:100%; max-width:280px;">
+                <button class="btn btn-primary btn-block" id="btn-rematch">↻ Jugar otra vez</button>
+                <button class="btn btn-ghost btn-block" id="btn-back-lobby">Volver al inicio</button>
+            </div>
+        </section>
+
+        <footer class="hint">Desarrollado por Marbin Alarcón</footer>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- PeerJS: única librería externa, necesaria para la conexión P2P entre jugadores -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+    <script>
+        /* =========================================================================
+           ARCANO DUELO — lógica del juego (multijugador, 2 a 6 duelistas)
+
+           ARQUITECTURA DE RED: el anfitrión (host) es la única autoridad de la
+           partida y actúa como relé en topología estrella — cada invitado (guest)
+           se conecta únicamente al host; el host reenvía el estado a todos.
+           Los invitados nunca se conectan entre sí, lo que mantiene la lógica de
+           red simple y confiable con cualquier número de jugadores.
+           ========================================================================= */
+
+        const MAX_PLAYERS = 6;
+        const MIN_PLAYERS = 2;
+
+        const STAT_KEYS = ["ataque", "defensa", "velocidad", "magia", "vida", "inteligencia", "resistencia", "poder"];
+        const STAT_LABELS = { ataque: "⚔️ Ataque", defensa: "🛡 Defensa", velocidad: "⚡️ Velocidad", magia: "✨ Magia", vida: "❤️ Vida", inteligencia: "🧠 Inteligencia", resistencia: "🛡 Resistencia", poder: "💪 Poder" };
+
+        const ELEMENTS = [
+            { key: "fuego", color: "#ff5a3c", glyph: "🔥" },
+            { key: "hielo", color: "#3cd2ff", glyph: "❄️" },
+            { key: "sombra", color: "#9b7bff", glyph: "🌑" },
+            { key: "luz", color: "#ffe66d", glyph: "☀️" },
+            { key: "trueno", color: "#ffd93c", glyph: "⚡" },
+            { key: "agua", color: "#3c9eff", glyph: "💧" },
+            { key: "tierra", color: "#8b5e3c", glyph: "🌍" },
+            { key: "aire", color: "#a3f0ff", glyph: "💨" }
+        ];
+
+        /* ---------------------------------------------------------------------- */
+        /* PERSONAJES — única fuente de datos de las cartas                       */
+        /* ---------------------------------------------------------------------- */
+        /* Para añadir un personaje nuevo, agrega un objeto más a este arreglo    */
+        /* con exactamente esta forma. El motor del juego no necesita tocarse.    */
+        const PERSONAJES = [
+            {
+                id: 1,
+                nombre: "Asta - Black Clover",
+                imagen: "img/personajes/black-clover/asta.jpeg",
+                descripcion: "Tras obtener su grimorio de cinco hojas, logró unirse a los Toros Negros, una de las órdenes de Caballeros Mágicos más inadaptadas del Reino del Trébol. A lo largo de la historia, ha superado sus límites en múltiples arcos, enfrentándose a elfos, a la Tríada Oscura y a demonios poderosos como Lucifero",
+                categoria: "Demonios",
+                rareza: "Legendario",
+                stats: { vida: 92, ataque: 88, defensa: 84, velocidad: 61, magia: 39, inteligencia: 55, resistencia: 90, poder: 97 }
+            },
+            {
+                id: 2,
+                nombre: "Byakuya Kuchiki - Bleach",
+                imagen: "img/personajes/bleach/byakuya-kuchiki.jpeg",
+                descripcion: "Líder del Clan Kuchiki y capitán de la 6.ª División en el Gotei 13. Destaca por su porte noble, vestimenta tradicional y su Zanpakutō Senbonzakura, cuyas hojas se disgregan en millones de pétalos afilados capaces de atacar desde cualquier ángulo.",
+                categoria: "Segadores de Almas",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 85, defensa: 60, velocidad: 90, magia: 88, inteligencia: 60, resistencia: 70, poder: 89 }
+            },
+            {
+                id: 3,
+                nombre: "Ichigo Kurosaki - Bleach",
+                imagen: "img/personajes/bleach/ichigo-kurosaki.jpeg",
+                descripcion: "A pesar de su apariencia rebelde (cabello naranja brillante y actitud seria), Ichigo tiene un fuerte sentido de la justicia y una profunda compasión motivada por el trauma de haber perdido a su madre a una edad temprana.",
+                categoria: "Segadores de Almas",
+                rareza: "Legendario",
+                stats: { vida: 99, ataque: 70, defensa: 97, velocidad: 20, magia: 30, inteligencia: 35, resistencia: 85, poder: 95 }
+            },
+            {
+                id: 4,
+                nombre: "Kenpachi Zaraki - Bleach",
+                imagen: "img/personajes/bleach/kenpachi-zaraki.jpeg",
+                descripcion: "Capitán de la 11.ª División del Gotei 13. Famoso por su brutalidad y amor por el combate, es un guerrero monstruoso que originalmente carecía de nombre, tomando el suyo del peligroso Distrito 80 de Rukongai donde creció. A diferencia de otros, no usa magia (Kido), sino que confía en su inmenso poder espiritual.",
+                categoria: "Bestia",
+                rareza: "Raro",
+                stats: { vida: 90, ataque: 90, defensa: 55, velocidad: 95, magia: 30, inteligencia: 65, resistencia: 90, poder: 92 }
+            },
+            {
+                id: 5,
+                nombre: "Kisuke Urahara - Bleach",
+                imagen: "img/personajes/bleach/kisuke-urahara.jpeg",
+                descripcion: "Ex capitán de la 12ª División y fundador del Instituto de Investigación y Desarrollo Shinigami, destaca por su enorme intelecto, actitud misteriosa y su icónico sombrero a rayas",
+                categoria: "Humano",
+                rareza: "Épico",
+                stats: { vida: 85, ataque: 75, defensa: 65, velocidad: 70, magia: 97, inteligencia: 96, resistencia: 50, poder: 88 }
+            },
+            {
+                id: 6,
+                nombre: "Renji Abarai - Bleach",
+                imagen: "img/personajes/bleach/renji-abarai.jpeg",
+                descripcion: "Carismático Shinigami y teniente de la Sexta División del Gotei 13 en el anime y manga Bleach. Destaca por su característico cabello rojo, tatuajes tribales y su lealtad inquebrantable, además de ser el esposo de Rukia Kuchiki.",
+                categoria: "Segadores de Almas",
+                rareza: "Común",
+                stats: { vida: 78, ataque: 83, defensa: 80, velocidad: 58, magia: 65, inteligencia: 60, resistencia: 82, poder: 81 }
+            },
+            {
+                id: 7,
+                nombre: "Rukia Kuchiki - Bleach",
+                imagen: "img/personajes/bleach/rukia-kuchiki.jpeg",
+                descripcion: "Actual capitana de la 13.ª División , sucediendo al excapitán Jūshirō Ukitake tras haber servido anteriormente como teniente. Rukia es la hermana adoptiva de Byakuya Kuchiki , la hermana menor de Hisana Kuchiki , amiga de Ichigo Kurosaki , madre de Ichika Abarai y está casada con Renji Abarai .",
+                categoria: "Segadores de Almas",
+                rareza: "Común",
+                stats: { vida: 95, ataque: 40, defensa: 99, velocidad: 15, magia: 20, inteligencia: 45, resistencia: 97, poder: 60 }
+            },
+            {
+                id: 8,
+                nombre: "Shigekuni Yamamoto - Bleach",
+                imagen: "img/personajes/bleach/shigekuni-yamamoto.jpeg",
+                descripcion: "Fue el capitán de la 1.ª División del Gotei 13 y también el primer Capitán Comandante de todo el Gotei 13. Su teniente era Chōjirō Sasakibe . Tras su muerte en la Guerra de Sangre Quincy y su expulsión al Infierno , obtuvo el epíteto de «Fundador del Gotei»",
+                categoria: "Segadores de Almas",
+                rareza: "Legendario",
+                stats: { vida: 90, ataque: 95, defensa: 75, velocidad: 76, magia: 55, inteligencia: 70, resistencia: 70, poder: 92 }
+            },
+            {
+                id: 9,
+                nombre: "Shunsui Kyoraku - Bleach",
+                imagen: "img/personajes/bleach/shunsui-Kyoraku.jpeg",
+                descripcion: "Es el capitán de la 1.ª División y capitán comandante del Gotei 13. Sus tenientes son su sobrina, Nanao Ise , y Genshirō Okikiba . Es el antiguo capitán de la 8.ª División .",
+                categoria: "Segadores de Almas",
+                rareza: "Legendario",
+                stats: { vida: 90, ataque: 85, defensa: 65, velocidad: 82, magia: 55, inteligencia: 82, resistencia: 60, poder: 82 }
+            },
+            {
+                id: 10,
+                nombre: "Toshiro Hitsugaya - Bleach",
+                imagen: "img/personajes/bleach/toshiro-hitsugaya.jpeg",
+                descripcion: "Es el capitán de la 10.ª División del Gotei 13 y también el más joven en history de ser nombrado capitán. Es conocido por su habilidad con el hielo y su personalidad serena.",
+                categoria: "Segadores de Almas",
+                rareza: "Legendario",
+                stats: { vida: 85, ataque: 90, defensa: 70, velocidad: 88, magia: 95, inteligencia: 90, resistencia: 65, poder: 88 }
+            },
+            {
+                id: 11,
+                nombre: "Uryu Ishida - Bleach",
+                imagen: "img/personajes/bleach/uryu-ishida.jpeg",
+                descripcion: "es un Quincy Gemischt que reside en la ciudad de Karakura . Es médico en el Hospital de Karakura, además de primo segundo y amigo de Ichigo Kurosaki . Es un antiguo Sternritter del Wandenreich con la designación A: Antítesis , [ 7 ] anteriormente uno de los Schutzstaffel de Yhwach , [ 8 ] y había sido nombrado por Yhwach como su futuro sucesor.",
+                categoria: "Quincy",
+                rareza: "Épico",
+                stats: { vida: 83, ataque: 91, defensa: 60, velocidad: 86, magia: 85, inteligencia: 93, resistencia: 65, poder: 81 }
+            },
+            {
+                id: 12,
+                nombre: "Yhwach - Bleach",
+                imagen: "img/personajes/bleach/Yhwach-Zangetsu.jpeg",
+                descripcion: "Es el líder del Wandenreich y el principal antagonista de la serie. Es un antiguo Sternritter del Wandenreich con la designación A: Antítesis , anteriormente uno de los Schutzstaffel de Yhwach , y había sido nombrado por Yhwach como su futuro sucesor.",
+                categoria: "Quincy",
+                rareza: "Épico",
+                stats: { vida: 93, ataque: 91, defensa: 80, velocidad: 86, magia: 85, inteligencia: 83, resistencia: 85, poder: 91 }
+            },
+            {
+                id: 13,
+                nombre: "Camus de Acuario - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/acuario.jpeg",
+                descripcion: "uno de los caballeros dorados del siglo XX. Es el Caballero Dorado de Acuario , conocido como el  Mago del agua y el hielo. Entrenó al pequeño Hyoga durante seis años en las gélidas tierras del este de Siberia y se vio obligado a luchar contra él en la batalla de las Doce Casas.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 87, ataque: 81, defensa: 70, velocidad: 86, magia: 65, inteligencia: 83, resistencia: 75, poder: 81 }
+            },
+            {
+                id: 14,
+                nombre: "Mu de Aries - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/aries.jpeg",
+                descripcion: "uno de los doce  caballeros dorados . Es uno de los aliados más leales del caballero de bronce y se encarga de reparar las telas dañadas en las primeras etapas de la serie. También se le conoce como Mu de Jamir, el herrero de telas.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 81, ataque: 78, defensa: 76, velocidad: 81, magia: 55, inteligencia: 85, resistencia: 65, poder: 79 }
+            },
+            {
+                id: 15,
+                nombre: "Mascara de Muerte Cancer - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/cancer.jpeg",
+                descripcion: "comúnmente llamado Máscara de Muerte, Máscara de la Muerte o Máscara Mortal en los doblajes para países de habla hispana, fue el Saint de Cáncer que protegía el Templo del Gran Cangrejo.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 88, defensa: 81, velocidad: 66, magia: 51, inteligencia: 72, resistencia: 65, poder: 75 }
+            },
+            {
+                id: 16,
+                nombre: "Shura de Capricornio - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/capricornio.jpeg",
+                descripcion: "Shura de Capricornio es el quinto caballero dorado más fuerte y poderoso. Su poder es igual al de Camus de Acuario. Con su poderosa Excalibur lo convierten en uno de los más fuertes y poderosos del universo de Saint Seiya.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 88, ataque: 92, defensa: 79, velocidad: 86, magia: 50, inteligencia: 82, resistencia: 65, poder: 85 }
+            },
+            {
+                id: 17,
+                nombre: "Milo de Escorpión - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/escorpion.jpeg",
+                descripcion: "Fue el Santo de Oro de Scorpius del siglo XX en el anime y manga Saint Seiya. Es el Santo de Oro que protege la Casa de Escorpio. Aprecia mucho la amistad, y por eso vela por Hyōga, después de la muerte de Camus de Aquarius. Se siente orgulloso de ser un Gold Saint y se vuelve implacable frente a los enemigos.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 81, ataque: 82, defensa: 79, velocidad: 88, magia: 50, inteligencia: 83, resistencia: 65, poder: 81 }
+            },
+            {
+                id: 18,
+                nombre: "Saga de Géminis - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/geminis.jpeg",
+                descripcion: "Fue el Gold Saint de Géminis y principal antagonista desde la Saga de los Santos Negros hasta la Batalla de los doce templos, justamente por ser el usurpador del Papa del Santuario, con el fin de dominar el mundo y acabar con Saori y sus Santos al manipular al Ejército de Athena.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 79, ataque: 83, defensa: 72, velocidad: 91, magia: 60, inteligencia: 73, resistencia: 75, poder: 80 }
+            },
+            {
+                id: 19,
+                nombre: "Aioria de Leo - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/leo.jpeg",
+                descripcion: "Fue el Santo de Oro de Leo en la generación del Siglo XX hasta la Guerra contra Hades en 1990. Aiolia es un personaje del manga y anime Saint Seiya conocido como Los Caballeros del Zodiaco y protagonista de los Spin-offs Episode.G y Soul of Gold. Es el hermano menor de Aiolos, a pesar de su personalidad algo explosiva, tiene un corazón puro que identifica rápidamente la justicia, es por eso que fue uno de los primeros santos en reconocer la autoridad de Athena.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 85, defensa: 75, velocidad: 90, magia: 55, inteligencia: 70, resistencia: 70, poder: 82 }
+            },
+            {
+                id: 20,
+                nombre: "Dhoko de Libra - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/libra.jpeg",
+                descripcion: "Es uno de los Caballeros Dorados. Es uno de los personajes más antiguos del manga, junto con Aries Shion , ya que ambos aparecen en la anterior Guerra Santa , y es conocido principalmente por ser el mentor de Dragon Shiryu . Todos los Caballeros de Atenea también lo llaman el Viejo Maestro (老師, Rōshi ) como muestra de respeto, aunque su único discípulo verdadero sea Shiryu.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 93, ataque: 86, defensa: 74, velocidad: 91, magia: 55, inteligencia: 80, resistencia: 80, poder: 81 }
+            },
+            {
+                id: 21,
+                nombre: "Afrodita de Piscis - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/picis.jpeg",
+                descripcion: "Fue el Gold Saint de Pisces hasta su muerte a manos de Shun de Andromeda. Posteriormente fue revivido por Ker siendo muerto junto a Deathmask de Cancer a manos de Rhadamanthys. Su Cosmos reanimado por Athena haría que apareciese nuevamente ante el Muro de los Lamentos y reviviría temporalmente una vez más por Odín como Einherjer para derrotar al falso dios Loki en Saint Seiya: Soul of Gold.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 81, ataque: 76, defensa: 64, velocidad: 81, magia: 55, inteligencia: 72, resistencia: 70, poder: 79 }
+            },
+            {
+                id: 22,
+                nombre: "Aioros de Sagitario - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/sagitario.jpeg",
+                descripcion: "El Caballero de Oro de Sagitario, Aioros, es el epítome de la lealtad y el sacrificio en Los Caballeros del Zodiaco. Marcado como traidor tras salvar a la bebé Atenea, su espíritu guía y protege al protagonista Seiya de Pegaso, quien frecuentemente porta su armadura en momentos críticos.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 79, ataque: 82, defensa: 63, velocidad: 80, magia: 55, inteligencia: 66, resistencia: 70, poder: 81 }
+            },
+            {
+                id: 23,
+                nombre: "Aldebaran de Tauro - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/tauro.jpeg",
+                descripcion: "destaca por ser el guardián más corpulento, midiendo 2.10 m y pesando 130 kg. Es noble, leal y paciente, pero letal en el combate usando su técnica destructiva Gran Cuerno, la cual ejecuta con sus característicos brazos cruzados.",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 85, ataque: 88, defensa: 70, velocidad: 75, magia: 55, inteligencia: 70, resistencia: 75, poder: 85 }
+            },
+            {
+                id: 24,
+                nombre: "Shaka de Virgo - Caballeros del Zodiaco",
+                imagen: "img/personajes/caballeros-zodiaco/virgo.jpeg",
+                descripcion: "El Caballero de Virgo, principalmente encarnado por Shaka de Virgo en la obra clásica, es el Santo de Oro guardián del sexto templo del Santuario. Conocido como el hombre más cercano a Dios y considerado la reencarnación de Buda, destaca por su inmenso poder cósmico, sabiduría, serenidad y por dominar el Octavo Sentido",
+                categoria: "Caballeros del Zodiaco",
+                rareza: "Épico",
+                stats: { vida: 85, ataque: 90, defensa: 80, velocidad: 85, magia: 55, inteligencia: 80, resistencia: 85, poder: 86 }
+            },
+            {
+                id: 25,
+                nombre: "Choso - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/choso.jpeg",
+                descripcion: "Choso es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 81, ataque: 83, defensa: 79, velocidad: 75, magia: 55, inteligencia: 60, resistencia: 81, poder: 81 }
+            },
+            {
+                id: 26,
+                nombre: "jogo - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/jogo.jpeg",
+                descripcion: "Jogo es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 79, ataque: 86, defensa: 83, velocidad: 78, magia: 55, inteligencia: 70, resistencia: 85, poder: 84 }
+            },
+            {
+                id: 27,
+                nombre: "Kento Kanami - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/kento-kanami.jpeg",
+                descripcion: "Kento Kanami es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 81, ataque: 83, defensa: 79, velocidad: 75, magia: 55, inteligencia: 60, resistencia: 81, poder: 81 }
+            },
+            {
+                id: 28,
+                nombre: "Mahito - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/mahito.jpeg",
+                descripcion: "Mahito es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 86, ataque: 91, defensa: 90, velocidad: 73, magia: 55, inteligencia: 78, resistencia: 88, poder: 88 }
+            },
+            {
+                id: 29,
+                nombre: "Megumi Fushiguro - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/megumifushiguro.jpeg",
+                descripcion: "Megumi Fushiguro es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 83, ataque: 84, defensa: 81, velocidad: 78, magia: 75, inteligencia: 80, resistencia: 83, poder: 85 }
+            },
+            {
+                id: 30,
+                nombre: "Mei Mei - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/mei-mei.jpeg",
+                descripcion: "Mei Mei es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 87, ataque: 88, defensa: 81, velocidad: 78, magia: 75, inteligencia: 72, resistencia: 86, poder: 87 }
+            },
+            {
+                id: 31,
+                nombre: "Noritoshi Kamo - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/noritoshi-kamo.jpeg",
+                descripcion: "Noritoshi Kamo es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 91, ataque: 93, defensa: 89, velocidad: 85, magia: 0, inteligencia: 66, resistencia: 89, poder: 92 }
+            },
+            {
+                id: 32,
+                nombre: "Saturu Goyo - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/saturu-goyo.jpeg",
+                descripcion: "Saturu Goyo es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Legendario",
+                stats: { vida: 95, ataque: 97, defensa: 93, velocidad: 91, magia: 85, inteligencia: 90, resistencia: 81, poder: 96 }
+            },
+            {
+                id: 33,
+                nombre: "Suguru Geto - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/suguru-geto.jpeg",
+                descripcion: "Suguru Geto es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 92, ataque: 93, defensa: 91, velocidad: 85, magia: 75, inteligencia: 89, resistencia: 83, poder: 91 }
+            },
+            {
+                id: 34,
+                nombre: "Sukuna - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/sukuna.jpeg",
+                descripcion: "Sukuna es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Legendario",
+                stats: { vida: 92, ataque: 93, defensa: 91, velocidad: 85, magia: 92, inteligencia: 89, resistencia: 83, poder: 95 }
+            },
+            {
+                id: 35,
+                nombre: "Toge Inumaki - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/toge-inumaki.jpeg",
+                descripcion: "Toge Inumaki es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 81, ataque: 83, defensa: 78, velocidad: 75, magia: 55, inteligencia: 80, resistencia: 75, poder: 79 }
+            },
+            {
+                id: 36,
+                nombre: "Yoshinobu Gakuganji - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/yoshinobu-gakuganji.jpeg",
+                descripcion: "Yoshinobu Gakuganji es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 73, defensa: 72, velocidad: 85, magia: 75, inteligencia: 66, resistencia: 75, poder: 78 }
+            },
+            {
+                id: 37,
+                nombre: "Yuta Okkotsu - Jujutsu Kaisen",
+                imagen: "img/personajes/jujutsu-kaisen/yuta-okkotsu.jpeg",
+                descripcion: "Yuta Okkotsu es un personaje de Jujutsu Kaisen, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Jujutsu Kaisen",
+                rareza: "Épico",
+                stats: { vida: 91, ataque: 93, defensa: 92, velocidad: 86, magia: 85, inteligencia: 70, resistencia: 86, poder: 90 }
+            },
+            {
+                id: 38,
+                nombre: "Genya Shinazugawa - Demon Slayer",
+                imagen: "img/personajes/kimetsu/genya-shinazugawa.jpeg",
+                descripcion: "Genya Shinazugawa es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 82, ataque: 83, defensa: 79, velocidad: 75, magia: 55, inteligencia: 60, resistencia: 81, poder: 81 }
+            },
+            {
+                id: 39,
+                nombre: "Giyu Tomioka - Demon Slayer",
+                imagen: "img/personajes/kimetsu/giyu-tomioka.jpeg",
+                descripcion: "Giyu Tomioka es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 83, ataque: 81, defensa: 71, velocidad: 85, magia: 55, inteligencia: 70, resistencia: 81, poder: 79 }
+            },
+            {
+                id: 40,
+                nombre: "Gyomei Himejima - Demon Slayer",
+                imagen: "img/personajes/kimetsu/gyomei-himejima.jpeg",
+                descripcion: "Gyomei Himejima es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 82, ataque: 80, defensa: 70, velocidad: 75, magia: 55, inteligencia: 60, resistencia: 71, poder: 79 }
+            },
+            {
+                id: 41,
+                nombre: "Inosuke Hashibira - Demon Slayer",
+                imagen: "img/personajes/kimetsu/inosuke-hashibira.jpeg",
+                descripcion: "Inosuke Hashibira es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 78, ataque: 79, defensa: 71, velocidad: 87, magia: 55, inteligencia: 50, resistencia: 61, poder: 72 }
+            },
+            {
+                id: 42,
+                nombre: "Kanae Kocho - Demon Slayer",
+                imagen: "img/personajes/kimetsu/kanae-kocho.jpeg",
+                descripcion: "Kanae Kocho es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 82, ataque: 80, defensa: 70, velocidad: 81, magia: 55, inteligencia: 70, resistencia: 80, poder: 76 }
+            },
+            {
+                id: 43,
+                nombre: "Kanao Tsuyuri - Demon Slayer",
+                imagen: "img/personajes/kimetsu/kanao-tsuyuri.jpeg",
+                descripcion: "Kanao Tsuyuri es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 83, ataque: 82, defensa: 76, velocidad: 81, magia: 55, inteligencia: 70, resistencia: 78, poder: 81 }
+            },
+            {
+                id: 44,
+                nombre: "Kyojuro Rengoku - Demon Slayer",
+                imagen: "img/personajes/kimetsu/kyojuro-rengoku.jpeg",
+                descripcion: "Kyojuro Rengoku es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 84, ataque: 84, defensa: 76, velocidad: 81, magia: 55, inteligencia: 70, resistencia: 82, poder: 83 }
+            },
+            {
+                id: 45,
+                nombre: "Mitsuri Kanroji - Demon Slayer",
+                imagen: "img/personajes/kimetsu/mitsuri-kanroji.jpeg",
+                descripcion: "Mitsuri Kanroji es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 80, defensa: 71, velocidad: 80, magia: 55, inteligencia: 70, resistencia: 81, poder: 80 }
+            },
+            {
+                id: 46,
+                nombre: "Muichiro Tokito - Demon Slayer",
+                imagen: "img/personajes/kimetsu/muichiro-tokito.jpeg",
+                descripcion: "Muichiro Tokito es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 86, ataque: 83, defensa: 71, velocidad: 86, magia: 55, inteligencia: 71, resistencia: 71, poder: 79 }
+            },
+            {
+                id: 47,
+                nombre: "Nezuko Kamado - Demon Slayer",
+                imagen: "img/personajes/kimetsu/nezuko-kamado.jpeg",
+                descripcion: "Nezuko Kamado es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 76, defensa: 71, velocidad: 86, magia: 55, inteligencia: 60, resistencia: 81, poder: 78 }
+            },
+            {
+                id: 48,
+                nombre: "Obanai Iguro - Demon Slayer",
+                imagen: "img/personajes/kimetsu/obanai-iguro.jpeg",
+                descripcion: "Obanai Iguro es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 82, defensa: 71, velocidad: 80, magia: 55, inteligencia: 81, resistencia: 83, poder: 81 }
+            },
+            {
+                id: 49,
+                nombre: "Senami Shinazugawa- Demon Slayer",
+                imagen: "img/personajes/kimetsu/senami-shinazugawa.jpeg",
+                descripcion: "Senami Shinazugawa es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 84, ataque: 85, defensa: 71, velocidad: 81, magia: 55, inteligencia: 70, resistencia: 80, poder: 81 }
+            },
+            {
+                id: 50,
+                nombre: "Tanjiro Kamado - Demon Slayer",
+                imagen: "img/personajes/kimetsu/tanjiro.jpeg",
+                descripcion: "Tanjiro Kamado es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 89, ataque: 88, defensa: 81, velocidad: 87, magia: 55, inteligencia: 70, resistencia: 80, poder: 91 }
+            },
+            {
+                id: 51,
+                nombre: "Tengen Uzui - Demon Slayer",
+                imagen: "img/personajes/kimetsu/tengen-uzui.jpeg",
+                descripcion: "Tengen Uzui es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 84, ataque: 82, defensa: 71, velocidad: 81, magia: 55, inteligencia: 70, resistencia: 81, poder: 80 }
+            },
+            {
+                id: 52,
+                nombre: "Zenitsu Agatsuma - Demon Slayer",
+                imagen: "img/personajes/kimetsu/zenitsu-agatsuma.jpeg",
+                descripcion: "Zenitsu Agatsuma es un personaje de Demon Slayer, conocido por su fuerza y habilidades sobrenaturales. Es un miembro del Círculo de los Catorce, un grupo de estudiantes que luchan contra los yokai.",
+                categoria: "Demon Slayer",
+                rareza: "Épico",
+                stats: { vida: 80, ataque: 81, defensa: 72, velocidad: 81, magia: 55, inteligencia: 70, resistencia: 81, poder: 78 }
+            }
+
+        ];
+
+        /* Colores de referencia por rareza (solo estética de la carta) */
+        const RAREZA_COLORES = {
+            "Común": "#8996a3",
+            "Raro": "#3cd2ff",
+            "Épico": "#9b7bff",
+            "Legendario": "#ffc857"
+        };
+
+        /* Adaptador: convierte un objeto de PERSONAJES en la carta que el motor  */
+        /* del juego ya sabe consumir (name, image, stats.ataque, etc).          */
+        function personajeToCarta(p, idx) {
+            return {
+                id: "p" + p.id,
+                name: p.nombre,
+                element: p.categoria,
+                color: RAREZA_COLORES[p.rareza] || ELEMENTS[idx % ELEMENTS.length].color,
+                glyph: ELEMENTS[idx % ELEMENTS.length].glyph,
+                image: p.imagen || null,
+                descripcion: p.descripcion,
+                categoria: p.categoria,
+                rareza: p.rareza,
+                stats: { ...p.stats }
+            };
+        }
+
+        function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function createDeck() {
+            return PERSONAJES.map((p, idx) => personajeToCarta(p, idx));
+        }
+
+        function getDeckForGame() {
+            return createDeck();
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Estado de red                                                          */
+        /* ---------------------------------------------------------------------- */
+        let peer = null;
+        let conns = new Map();   // solo host: peerId -> DataConnection
+        let conn = null;         // solo invitado: conexión con el host
+        let role = null;         // 'host' | 'guest'
+        let myId = null;         // 'host' para el anfitrión; peer.id para invitados
+        let myName = "";
+        let hostCode = null;
+        let game = null;         // estado autoritativo (host) o copia recibida (guest)
+
+        const $ = id => document.getElementById(id);
+
+        function showScreen(id) {
+            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+            $(id).classList.add("active");
+        }
+
+        function toast(msg) {
+            const t = $("toast");
+            t.textContent = msg;
+            t.classList.add("show");
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => t.classList.remove("show"), 2400);
+        }
+
+        function randomCode(len = 5) {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin caracteres ambiguos
+            let s = "";
+            for (let i = 0; i < len; i++) s += chars[randInt(0, chars.length - 1)];
+            return "AD-" + s;
+        }
+
+        function readMyName() {
+            const v = $("input-name").value.trim();
+            myName = v ? v.slice(0, 18) : ("Duelista " + randInt(100, 999));
+            return myName;
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Crear partida (host)                                                   */
+        /* ---------------------------------------------------------------------- */
+        function startHostFlow() {
+            readMyName();
+            showScreen("screen-waiting");
+            $("waiting-title").textContent = "Creando sala…";
+            $("waiting-code-block").classList.add("hidden");
+            $("waiting-status").textContent = "Generando código de sala…";
+            $("waiting-spinner").classList.remove("hidden");
+            $("btn-start-game").classList.add("hidden");
+
+            attemptCreatePeer(0);
+        }
+
+        function attemptCreatePeer(tries) {
+            if (tries > 5) {
+                $("waiting-status").textContent = "No se pudo crear la sala. Revisa tu conexión e inténtalo de nuevo.";
+                return;
+            }
+            const code = randomCode();
+            if (peer) { try { peer.destroy(); } catch (e) { } }
+            conns = new Map();
+            peer = new Peer(code, { debug: 0 });
+
+            peer.on("open", (id) => {
+                hostCode = id;
+                role = "host";
+                myId = "host";
+                game = {
+                    phase: "lobby",
+                    players: [{ id: "host", name: myName, hand: [], current: null, eliminated: false, connected: true }],
+                    turn: null, pot: [], lastStat: null, roundWinner: null, chooser: null,
+                    log: "Sala creada. Esperando jugadores…", winner: null, totalCards: 0
+                };
+                $("host-code").textContent = id;
+                $("waiting-code-block").classList.remove("hidden");
+                $("waiting-title").textContent = "Sala creada";
+                $("waiting-status").textContent = "Esperando a que se unan tus rivales…";
+                $("waiting-spinner").classList.add("hidden");
+                renderLobby();
+            });
+
+            peer.on("connection", (c) => {
+                if (!game) return;
+                if (game.phase !== "lobby" || game.players.length >= MAX_PLAYERS) {
+                    c.on("open", () => {
+                        c.send({ type: "joinError", reason: game.phase !== "lobby" ? "started" : "full" });
+                        setTimeout(() => { try { c.close(); } catch (e) { } }, 300);
+                    });
+                    return;
+                }
+                conns.set(c.peer, c);
+                c.on("data", (msg) => handleHostMessage(c.peer, msg));
+                c.on("close", () => hostHandleDisconnect(c.peer));
+                c.on("error", () => hostHandleDisconnect(c.peer));
+            });
+
+            peer.on("error", (err) => {
+                if (err && err.type === "unavailable-id") {
+                    attemptCreatePeer(tries + 1);
+                } else {
+                    toast("Error de conexión: " + (err && err.type ? err.type : "desconocido"));
+                }
+            });
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Unirse a partida (guest)                                               */
+        /* ---------------------------------------------------------------------- */
+        function startJoinFlow() {
+            const codeRaw = $("input-join-code").value.trim().toUpperCase();
+            if (!codeRaw) { toast("Ingresa un código válido"); return; }
+            const code = codeRaw.startsWith("AD-") ? codeRaw : "AD-" + codeRaw.replace(/^AD-?/, "");
+            readMyName();
+
+            showScreen("screen-waiting");
+            $("waiting-title").textContent = "Conectando…";
+            $("waiting-code-block").classList.add("hidden");
+            $("waiting-status").textContent = "Buscando la sala " + code + "…";
+            $("waiting-spinner").classList.remove("hidden");
+            $("btn-start-game").classList.add("hidden");
+            $("lobby-roster").innerHTML = "";
+
+            role = "guest";
+            if (peer) { try { peer.destroy(); } catch (e) { } }
+            peer = new Peer(undefined, { debug: 0 });
+
+            peer.on("open", (id) => {
+                myId = id;
+                conn = peer.connect(code, { reliable: true });
+                setupGuestConnection(code);
+            });
+
+            peer.on("error", (err) => {
+                $("waiting-status").textContent = "No se encontró la sala. Verifica el código.";
+                $("waiting-spinner").classList.add("hidden");
+                toast("Error: " + (err && err.type ? err.type : "no se pudo conectar"));
+            });
+        }
+
+        function setupGuestConnection(code) {
+            conn.on("open", () => {
+                conn.send({ type: "join", name: myName });
+                $("waiting-title").textContent = "Conectado";
+                $("waiting-status").textContent = "Esperando a que el anfitrión inicie el duelo…";
+                $("waiting-spinner").classList.add("hidden");
+            });
+            conn.on("data", (msg) => handleGuestMessage(msg));
+            conn.on("close", () => onHostLeft());
+            conn.on("error", () => {
+                $("waiting-status").textContent = "No se encontró la sala. Verifica el código.";
+                $("waiting-spinner").classList.add("hidden");
+            });
+        }
+
+        function onHostLeft() {
+            if ($("screen-gameover").classList.contains("active")) return;
+            toast("El anfitrión cerró la sala");
+            resetToLobby();
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Mensajería del host (autoridad de la partida)                          */
+        /* ---------------------------------------------------------------------- */
+        function broadcastState() {
+            conns.forEach((c) => { if (c.open) c.send({ type: "state", game }); });
+        }
+
+        function sendTo(id, msg) {
+            const c = conns.get(id);
+            if (c && c.open) c.send(msg);
+        }
+
+        function handleHostMessage(fromId, msg) {
+            if (!msg || !msg.type || !game) return;
+            if (msg.type === "join") {
+                handleJoin(fromId, msg.name);
+            } else if (msg.type === "chooseStat") {
+                if (game.turn === fromId) hostResolveChoice(msg.stat);
+            } else if (msg.type === "rematchRequest") {
+                if (game.phase === "gameover") beginNewGame();
+            } else if (msg.type === "leave") {
+                hostHandleDisconnect(fromId);
+            }
+        }
+
+        function handleJoin(fromId, name) {
+            if (game.players.some(p => p.id === fromId)) return;
+            const cleanName = (name || "Jugador").toString().slice(0, 18) || "Jugador";
+            game.players.push({ id: fromId, name: cleanName, hand: [], current: null, eliminated: false, connected: true });
+            game.log = cleanName + " se unió a la sala.";
+            renderLobby();
+            broadcastState();
+        }
+
+        function hostHandleDisconnect(id) {
+            conns.delete(id);
+            if (!game) return;
+            const idx = game.players.findIndex(p => p.id === id);
+            if (idx === -1) return;
+
+            if (game.phase === "lobby") {
+                game.players.splice(idx, 1);
+                game.log = "Un jugador salió de la sala.";
+                renderLobby();
+                broadcastState();
+                return;
+            }
+
+            if (game.phase === "gameover") return;
+
+            game.players[idx].connected = false;
+            game.players[idx].eliminated = true;
+            game.log = game.players[idx].name + " se desconectó y quedó fuera del duelo.";
+
+            const active = game.players.filter(p => !p.eliminated && p.hand.length > 0);
+            if (game.turn === id) {
+                game.turn = active.length ? nextActivePlayerId(id) : null;
+            }
+            if (active.length <= 1) {
+                finishGame();
+            }
+            broadcastState();
+            renderGame();
+            if (game.phase === "gameover") showGameOver();
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Lógica de partida — el HOST es autoridad                               */
+        /* ---------------------------------------------------------------------- */
+        function beginNewGame() {
+            const active = game.players.filter(p => p.connected !== false);
+            game.players = active;
+            const n = active.length;
+            const deck = shuffle(getDeckForGame());
+
+            game.players.forEach(p => { p.hand = []; p.current = null; p.eliminated = false; });
+            deck.forEach((card, i) => { game.players[i % n].hand.push(card); });
+
+            game.turn = game.players[randInt(0, n - 1)].id;
+            game.pot = [];
+            game.phase = "choosing";
+            game.lastStat = null;
+            game.roundWinner = null;
+            game.chooser = null;
+            game.winner = null;
+            game.totalCards = deck.length;
+            game.log = "¡El duelo comienza! " + n + " duelistas se reparten " + deck.length + " cartas.";
+
+            hostStartRound();
+            broadcastState();
+            renderGame();
+            showScreen("screen-game");
+        }
+
+        function hostStartRound() {
+            const active = game.players.filter(p => !p.eliminated && p.hand.length > 0);
+            if (active.length <= 1) {
+                finishGame();
+                return;
+            }
+            active.forEach(p => { p.current = p.hand[0]; });
+            game.phase = "choosing";
+        }
+
+        function finishGame() {
+            game.phase = "gameover";
+            const active = game.players.filter(p => !p.eliminated && p.hand.length > 0);
+            if (active.length >= 1) {
+                game.winner = active[0].id;
+            } else {
+                const ranked = game.players.slice().sort((a, b) => b.hand.length - a.hand.length);
+                game.winner = ranked.length ? ranked[0].id : null;
+            }
+        }
+
+        function nextActivePlayerId(fromId) {
+            const ids = game.players.map(p => p.id);
+            const idx = ids.indexOf(fromId);
+            for (let step = 1; step <= ids.length; step++) {
+                const cand = game.players[(idx + step + ids.length) % ids.length];
+                if (cand && !cand.eliminated && cand.hand.length >= 0) {
+                    if (!cand.eliminated) return cand.id;
+                }
+            }
+            return fromId;
+        }
+
+        function hostResolveChoice(stat) {
+            if (role !== "host") return;
+            if (!game || game.phase !== "choosing") return;
+            const chooser = game.turn;
+
+            const active = game.players.filter(p => !p.eliminated && p.current);
+            const values = active.map(p => ({ id: p.id, name: p.name, val: p.current.stats[stat] }));
+            const maxVal = Math.max(...values.map(v => v.val));
+            const winners = values.filter(v => v.val === maxVal);
+
+            const roundCards = active.map(p => p.current).concat(game.pot);
+            active.forEach(p => p.hand.shift());
+
+            let roundWinner;
+            if (winners.length > 1) {
+                roundWinner = "tie";
+                game.pot = roundCards;
+                game.log = STAT_LABELS[stat] + ": empate a " + maxVal + " entre " + winners.map(w => w.name).join(", ") + " → " + roundCards.length + " cartas quedan en juego.";
+            } else {
+                roundWinner = winners[0].id;
+                game.pot = [];
+                const winnerPlayer = game.players.find(p => p.id === roundWinner);
+                winnerPlayer.hand.push(...roundCards);
+                const whoLabel = roundWinner === chooser ? "¡" + winnerPlayer.name + " gana la ronda!" : winnerPlayer.name + " se lleva la ronda…";
+                game.log = STAT_LABELS[stat] + ": máximo " + maxVal + " → " + whoLabel + " (+" + roundCards.length + " cartas)";
+            }
+
+            game.players.forEach(p => { if (!p.eliminated && p.hand.length === 0) p.eliminated = true; });
+
+            game.phase = "resolved";
+            game.lastStat = stat;
+            game.roundWinner = roundWinner;
+            game.chooser = chooser;
+
+            broadcastState();
+            renderGame();
+
+            // tras una pausa para mostrar el resultado, se decide el siguiente turno
+            setTimeout(() => {
+                const active2 = game.players.filter(p => !p.eliminated);
+                if (active2.length <= 1) {
+                    finishGame();
+                } else {
+                    const preferred = roundWinner === "tie" ? chooser : roundWinner;
+                    const preferredPlayer = game.players.find(p => p.id === preferred);
+                    game.turn = (preferredPlayer && !preferredPlayer.eliminated) ? preferred : nextActivePlayerId(preferred);
+                    hostStartRound();
+                }
+                broadcastState();
+                renderGame();
+                if (game.phase === "gameover") showGameOver();
+            }, 4200);
+        }
+
+        function chooseStat(stat) {
+            if (!game || game.phase !== "choosing") return;
+            if (game.turn !== myId) return;
+
+            if (role === "host") {
+                hostResolveChoice(stat);
+            } else {
+                conn.send({ type: "chooseStat", stat });
+            }
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Mensajería del invitado                                                */
+        /* ---------------------------------------------------------------------- */
+        function handleGuestMessage(msg) {
+            if (!msg || !msg.type) return;
+            if (msg.type === "state") {
+                game = msg.game;
+                if (game.phase === "lobby") {
+                    renderLobby();
+                    showScreen("screen-waiting");
+                } else {
+                    renderGame();
+                    showScreen("screen-game");
+                    if (game.phase === "gameover") showGameOver();
+                }
+            } else if (msg.type === "joinError") {
+                toast(msg.reason === "full" ? "La sala está llena (máx. " + MAX_PLAYERS + ")" : "La partida ya había comenzado");
+                resetToLobby();
+            }
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Render — sala de espera                                                */
+        /* ---------------------------------------------------------------------- */
+        function hexColorFor(id) {
+            const palette = [ "#ff7a29", "#17e3a6", "#9b7bff", "#ffc857", "#ff4d5e", "#3cd2ff" ];
+            let h = 0;
+            for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+            return palette[h % palette.length];
+        }
+
+        function renderLobby() {
+            if (!game) return;
+            const roster = $("lobby-roster");
+            roster.innerHTML = "";
+            if (!game.players.length) {
+                roster.innerHTML = '<div class="roster-empty">Nadie se ha unido todavía…</div>';
+            }
+            game.players.forEach(p => {
+                const row = document.createElement("div");
+                row.className = "roster-row" + (p.id === myId ? " me" : "");
+                const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
+                row.innerHTML =
+                    '<div class="hex" style="--hex-color:' + hexColorFor(p.id) + '">' + initial + '</div>' +
+                    '<div class="roster-info">' +
+                    '<div class="roster-name">' + p.name + (p.id === myId ? " (tú)" : "") + '</div>' +
+                    '<div class="roster-tag">' + (p.id === "host" ? "Anfitrión" : "Duelista") + '</div>' +
+                    '</div>' +
+                    '<span class="roster-dot' + (p.connected === false ? " off" : "") + '"></span>';
+                roster.appendChild(row);
+            });
+
+            $("waiting-status").textContent = role === "host"
+                ? "Duelistas conectados: " + game.players.length + " / " + MAX_PLAYERS
+                : "Duelistas conectados: " + game.players.length + " / " + MAX_PLAYERS + " — esperando al anfitrión…";
+
+            const startBtn = $("btn-start-game");
+            if (role === "host") {
+                startBtn.classList.remove("hidden");
+                startBtn.disabled = game.players.length < MIN_PLAYERS;
+                startBtn.textContent = game.players.length < MIN_PLAYERS
+                    ? "⚔️  Se necesitan al menos " + MIN_PLAYERS + " jugadores"
+                    : "⚔️  Iniciar duelo (" + game.players.length + " jugadores)";
+            } else {
+                startBtn.classList.add("hidden");
+            }
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Render — partida                                                       */
+        /* ---------------------------------------------------------------------- */
+        function renderGame() {
+            if (!game) return;
+            const me = game.players.find(p => p.id === myId);
+            if (!me) return;
+            const others = game.players.filter(p => p.id !== myId);
+
+            $("hud-room-code").textContent = hostCode || "—";
+            $("hud-player-count").textContent = game.players.length;
+
+            const potInfo = $("pot-tag");
+            if (game.pot && game.pot.length) {
+                potInfo.textContent = "🔥 " + game.pot.length + " cartas en juego por el empate";
+                potInfo.classList.remove("hidden");
+            } else {
+                potInfo.classList.add("hidden");
+            }
+
+            // banner de turno
+            const banner = $("turn-banner");
+            const isMyTurn = game.turn === myId && game.phase === "choosing";
+            banner.classList.remove("mine", "theirs");
+            if (game.phase === "gameover") {
+                banner.textContent = "Duelo finalizado";
+            } else if (isMyTurn) {
+                banner.textContent = "🎯 Tu turno — elige un atributo";
+                banner.classList.add("mine");
+            } else {
+                const turnPlayer = game.players.find(p => p.id === game.turn);
+                banner.textContent = "⌛ Turno de " + (turnPlayer ? turnPlayer.name : "…") + "…";
+                banner.classList.add("theirs");
+            }
+
+            renderOpponents(others);
+            renderMyCard(me, isMyTurn);
+            $("log-box").innerHTML = game.log || "";
+        }
+
+        function renderOpponents(others) {
+            const strip = $("opponents-strip");
+            strip.innerHTML = "";
+            const revealed = game.phase === "resolved" || game.phase === "gameover";
+            others.forEach(p => {
+                const chip = document.createElement("div");
+                chip.className = "opp-chip" + (p.id === game.turn && game.phase === "choosing" ? " active-turn" : "") + (p.eliminated ? " eliminated" : "");
+                const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
+                let media = '<div class="hex" style="--hex-color:' + hexColorFor(p.id) + '">' + initial + '</div>';
+                if (revealed && p.current && p.current.image) {
+                    media = '<div class="hex" style="--hex-color:' + hexColorFor(p.id) + '"><img src="' + p.current.image + '" alt=""></div>';
+                }
+
+                let resultTag = "";
+                if (revealed && game.lastStat && p.current) {
+                    const val = p.current.stats[game.lastStat];
+                    let cls = "tie";
+                    if (game.roundWinner !== "tie") cls = (game.roundWinner === p.id) ? "win" : "lose";
+                    resultTag = '<span class="opp-stat-result ' + cls + '">' + val + '</span>';
+                }
+
+                chip.innerHTML =
+                    media +
+                    '<div class="roster-name">' + p.name + '</div>' +
+                    '<div class="opp-count">' + (p.eliminated ? "Eliminado" : p.hand.length + " cartas") + '</div>' +
+                    resultTag;
+                strip.appendChild(chip);
+            });
+        }
+
+        function renderMyCard(me, isMyTurn) {
+            const myCard = me.current;
+            const elMine = ELEMENTS.find(e => e.key === (myCard && myCard.element)) || ELEMENTS[0];
+            const cardMineEl = $("card-mine");
+            cardMineEl.style.setProperty("--el-color", myCard ? myCard.color : elMine.color);
+            cardMineEl.querySelector(".el-tag").textContent = myCard ? myCard.element : "—";
+            cardMineEl.querySelector(".card-name").textContent = myCard ? myCard.name : (me.eliminated ? "Has sido eliminado" : "—");
+            $("media-mine").innerHTML = myCard
+                ? (myCard.image
+                    ? '<img src="' + myCard.image + '" alt="' + myCard.name + '">'
+                    : '<div class="glyph-fallback">' + myCard.glyph + '</div>')
+                : '<div class="glyph-fallback">🂠</div>';
+
+            const statsBox = $("stats-mine");
+            statsBox.innerHTML = "";
+            if (myCard) {
+                const others = game.players.filter(p => p.id !== me.id && !p.eliminated && p.current);
+                STAT_KEYS.forEach(k => {
+                    const row = document.createElement("div");
+                    row.className = "stat-row";
+                    const canClick = isMyTurn;
+                    if (canClick) row.classList.add("clickable");
+
+                    let gaugeHtml = "";
+                    if (game.phase === "resolved" && game.lastStat === k) {
+                        row.classList.add("chosen");
+                        if (game.roundWinner === me.id) {
+                            row.classList.add("win");
+                        } else if (game.roundWinner !== "tie") {
+                            row.classList.add("lose");
+                        }
+                        const bestOpp = others.reduce((max, p) => Math.max(max, p.current.stats[k]), 0);
+                        const myVal = myCard.stats[k];
+                        const total = Math.max(1, myVal + bestOpp);
+                        gaugeHtml = '<div class="duel-gauge"><span class="g-mine" style="width:' + Math.round(myVal / total * 100) + '%"></span><span class="g-opp" style="width:' + Math.round(bestOpp / total * 100) + '%"></span></div>';
+                    }
+
+                    row.innerHTML = '<span class="k">' + STAT_LABELS[k] + '</span><span class="v">' + myCard.stats[k] + '</span>';
+                    if (gaugeHtml) row.innerHTML += gaugeHtml;
+                    if (canClick) {
+                        row.addEventListener("click", () => chooseStat(k));
+                    }
+                    statsBox.appendChild(row);
+                });
+            }
+
+            cardMineEl.classList.toggle("facedown", !myCard);
+        }
+
+        function showGameOver() {
+            const iWon = game.winner === myId;
+            $("go-trophy").textContent = iWon ? "🏆" : "💀";
+            const title = $("go-title");
+            const winnerPlayer = game.players.find(p => p.id === game.winner);
+            title.textContent = iWon ? "¡Has ganado el duelo!" : (winnerPlayer ? winnerPlayer.name + " gana el duelo" : "El duelo terminó");
+            title.className = iWon ? "win" : "lose";
+            const total = (game && game.totalCards) || PERSONAJES.length;
+            $("go-sub").textContent = iWon
+                ? "Reuniste las " + total + " cartas del mazo arcano."
+                : (winnerPlayer ? winnerPlayer.name + " reunió las cartas del mazo arcano." : "");
+
+            const standings = $("final-standings");
+            standings.innerHTML = "";
+            game.players.slice().sort((a, b) => b.hand.length - a.hand.length).forEach((p, i) => {
+                const row = document.createElement("div");
+                row.className = "roster-row" + (p.id === myId ? " me" : "");
+                const initial = (p.name || "?").trim().charAt(0).toUpperCase() || "?";
+                row.innerHTML =
+                    '<div class="hex" style="--hex-color:' + hexColorFor(p.id) + '">' + (i + 1) + '</div>' +
+                    '<div class="roster-info"><div class="roster-name">' + p.name + (p.id === myId ? " (tú)" : "") + '</div></div>' +
+                    '<div class="opp-count">' + p.hand.length + ' cartas</div>';
+                standings.appendChild(row);
+            });
+
+            showScreen("screen-gameover");
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Reset / navegación                                                     */
+        /* ---------------------------------------------------------------------- */
+        function resetToLobby() {
+            try { if (conn) conn.close(); } catch (e) { }
+            try { if (peer) peer.destroy(); } catch (e) { }
+            conn = null; peer = null; role = null; myId = null; game = null; hostCode = null;
+            conns = new Map();
+            $("input-join-code").value = "";
+            showScreen("screen-lobby");
+        }
+
+        /* ---------------------------------------------------------------------- */
+        /* Eventos de UI                                                          */
+        /* ---------------------------------------------------------------------- */
+        $("btn-goto-host").addEventListener("click", startHostFlow);
+        $("btn-join").addEventListener("click", startJoinFlow);
+        $("input-join-code").addEventListener("keydown", e => { if (e.key === "Enter") startJoinFlow(); });
+        $("input-name").addEventListener("keydown", e => { if (e.key === "Enter") e.preventDefault(); });
+
+        $("btn-copy-code").addEventListener("click", () => {
+            const code = $("host-code").textContent;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => toast("Código copiado")).catch(() => toast(code));
+            } else {
+                toast(code);
+            }
+        });
+
+        $("btn-start-game").addEventListener("click", () => {
+            if (role !== "host" || !game || game.players.length < MIN_PLAYERS) return;
+            beginNewGame();
+        });
+
+        $("btn-cancel-wait").addEventListener("click", resetToLobby);
+        $("btn-leave-game").addEventListener("click", () => {
+            if (role === "guest" && conn && conn.open) conn.send({ type: "leave" });
+            resetToLobby();
+        });
+
+        $("btn-rematch").addEventListener("click", () => {
+            if (role === "host") {
+                beginNewGame();
+            } else {
+                if (conn && conn.open) conn.send({ type: "rematchRequest" });
+                $("go-sub").textContent = "Esperando que el anfitrión inicie una nueva partida…";
+            }
+        });
+        $("btn-back-lobby").addEventListener("click", resetToLobby);
+
+        /* ---------------------------------------------------------------------- */
+        /* PWA — registro del service worker                                     */
+        /* ---------------------------------------------------------------------- */
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("service-worker.js").catch(() => { });
+            });
+        }
+
+        // Sugerencia de instalación (evento beforeinstallprompt en Android/desktop)
+        let deferredPrompt = null;
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+    </script>
+</body>
+
+</html>
