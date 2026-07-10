@@ -2306,7 +2306,6 @@
                     phase: "lobby",
                     players: [{ id: "host", name: myName, hand: [], current: null, eliminated: false, connected: true }],
                     turn: null, pot: [], lastStat: null, roundWinner: null, chooser: null,
-                    tiedPlayers: null,
                     log: "Sala creada. Esperando jugadores…", winner: null, totalCards: 0
                 };
                 $("host-code").textContent = id;
@@ -2480,7 +2479,6 @@
             game.lastStat = null;
             game.roundWinner = null;
             game.chooser = null;
-            game.tiedPlayers = null;
             game.winner = null;
             game.totalCards = deck.length;
             game.log = "¡El duelo comienza! " + n + " duelistas se reparten " + deck.length + " cartas.";
@@ -2497,31 +2495,7 @@
                 finishGame();
                 return;
             }
-
-            // Si venimos de un empate, sólo los jugadores empatados (y con cartas
-            // pendientes) vuelven a jugar carta; el resto queda "congelado" hasta
-            // que se resuelva el empate.
-            let contenders = active;
-            if (game.tiedPlayers && game.tiedPlayers.length) {
-                contenders = active.filter(p => game.tiedPlayers.includes(p.id));
-
-                // Si por eliminación sólo queda un jugador empatado, se lleva el
-                // bote automáticamente y el juego vuelve a la normalidad.
-                if (contenders.length <= 1) {
-                    if (contenders.length === 1) {
-                        contenders[0].hand.push(...game.pot);
-                        game.pot = [];
-                        game.log = contenders[0].name + " se lleva el bote del empate al quedar como único contendiente.";
-                    }
-                    game.tiedPlayers = null;
-                    hostStartRound();
-                    return;
-                }
-            }
-
-            // Nadie más muestra carta mientras el empate no se resuelva.
-            game.players.forEach(p => { p.current = null; });
-            contenders.forEach(p => { p.current = p.hand[0]; });
+            active.forEach(p => { p.current = p.hand[0]; });
             game.phase = "choosing";
         }
 
@@ -2565,12 +2539,10 @@
             if (winners.length > 1) {
                 roundWinner = "tie";
                 game.pot = roundCards;
-                game.tiedPlayers = winners.map(w => w.id);
-                game.log = STAT_LABELS[stat] + ": empate a " + maxVal + " entre " + winners.map(w => w.name).join(", ") + " → " + roundCards.length + " cartas quedan en juego. Solo " + winners.map(w => w.name).join(" y ") + " seguirán jugando hasta desempatar.";
+                game.log = STAT_LABELS[stat] + ": empate a " + maxVal + " entre " + winners.map(w => w.name).join(", ") + " → " + roundCards.length + " cartas quedan en juego.";
             } else {
                 roundWinner = winners[0].id;
                 game.pot = [];
-                game.tiedPlayers = null;
                 const winnerPlayer = game.players.find(p => p.id === roundWinner);
                 winnerPlayer.hand.push(...roundCards);
                 const whoLabel = roundWinner === chooser ? "¡" + winnerPlayer.name + " gana la ronda!" : winnerPlayer.name + " se lleva la ronda…";
@@ -2593,18 +2565,7 @@
                 if (active2.length <= 1) {
                     finishGame();
                 } else {
-                    let preferred;
-                    if (roundWinner === "tie") {
-                        // El turno debe quedar en manos de uno de los jugadores
-                        // empatados (son los únicos que volverán a mostrar carta).
-                        const tiedActive = (game.tiedPlayers || []).filter(id => {
-                            const pl = game.players.find(p => p.id === id);
-                            return pl && !pl.eliminated;
-                        });
-                        preferred = tiedActive.includes(chooser) ? chooser : (tiedActive[0] || chooser);
-                    } else {
-                        preferred = roundWinner;
-                    }
+                    const preferred = roundWinner === "tie" ? chooser : roundWinner;
                     const preferredPlayer = game.players.find(p => p.id === preferred);
                     game.turn = (preferredPlayer && !preferredPlayer.eliminated) ? preferred : nextActivePlayerId(preferred);
                     hostStartRound();
@@ -2718,20 +2679,11 @@
             const banner = $("turn-banner");
             const isMyTurn = game.turn === myId && game.phase === "choosing";
             banner.classList.remove("mine", "theirs");
-            const isFrozenByTie = game.phase === "choosing" && game.tiedPlayers && game.tiedPlayers.length && !game.tiedPlayers.includes(myId) && !me.eliminated;
-
             if (game.phase === "gameover") {
                 banner.textContent = "Duelo finalizado";
             } else if (isMyTurn) {
                 banner.textContent = "🎯 Tu turno — elige un atributo";
                 banner.classList.add("mine");
-            } else if (isFrozenByTie) {
-                const tiedNames = game.tiedPlayers
-                    .map(id => (game.players.find(p => p.id === id) || {}).name)
-                    .filter(Boolean)
-                    .join(" y ");
-                banner.textContent = "🔥 Empate en juego entre " + tiedNames + " — espera a que se resuelva";
-                banner.classList.add("theirs");
             } else {
                 const turnPlayer = game.players.find(p => p.id === game.turn);
                 banner.textContent = "⌛ Turno de " + (turnPlayer ? turnPlayer.name : "…") + "…";
